@@ -5,7 +5,10 @@ import Product from '@/lib/models/Product';
 
 // GET /api/products - Lấy danh sách sản phẩm từ MongoDB
 export async function GET(request: Request) {
-  await connectDB();
+  const conn = await connectDB();
+  if (!conn) {
+    return NextResponse.json({ success: false, error: 'Database not available' }, { status: 503 });
+  }
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get('platform');
   const category = searchParams.get('category');
@@ -37,7 +40,10 @@ export async function GET(request: Request) {
 
 // POST /api/products - Tạo sản phẩm mới
 export async function POST(request: Request) {
-  await connectDB();
+  const conn = await connectDB();
+  if (!conn) {
+    return NextResponse.json({ success: false, error: 'Database not available' }, { status: 503 });
+  }
   const body = await request.json();
   const requiredFields = [
     'platform',
