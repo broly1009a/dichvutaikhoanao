@@ -4,7 +4,7 @@ import User from '@/lib/models/User';
 import { adminMiddleware } from '@/lib/middleware/auth';
 
 // PUT /api/user/[id] - Cập nhật thông tin người dùng
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   // Check admin middleware
 //   const isAdmin = await adminMiddleware(request);
 //   if (!isAdmin) {
@@ -13,7 +13,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     await connectDB();
     const body = await request.json();
-    const user = await User.findByIdAndUpdate(params.id, body, { new: true });
+    const { id } = await context.params;
+    const user = await User.findByIdAndUpdate(id, body, { new: true });
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
@@ -24,7 +25,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/user/[id] - Xóa người dùng
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   // Check admin middleware
   const isAdmin = await adminMiddleware(request);
   if (!isAdmin) {
@@ -32,7 +33,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
   try {
     await connectDB();
-    const user = await User.findByIdAndDelete(params.id);
+    const { id } = await context.params;
+    const user = await User.findByIdAndDelete(id);
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
