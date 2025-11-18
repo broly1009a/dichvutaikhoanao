@@ -43,8 +43,8 @@ const menuItems: MenuItem[] = [
   { icon: DocumentTextIcon, label: "Hoá đơn", href: "/deposit/invoice" },
   { icon: CreditCardIcon, label: "Nạp thẻ", href: "/deposit/card" },
   
-  { icon: null, label: "Tài khoản", isHeader: true, href: "" },
-  { icon: UserCircleIcon, label: "Đăng nhập / Đăng ký", href: "/auth/login" },
+  // { icon: null, label: "Tài khoản", isHeader: true, href: "" },
+  // { icon: UserCircleIcon, label: "Đăng nhập / Đăng ký", href: "/auth/login" },
   
   { icon: null, label: "Khác", isHeader: true, href: "" },
   { icon: NewspaperIcon, label: "Bài viết", href: "/posts" },

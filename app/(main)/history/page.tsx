@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { ExclamationTriangleIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { HistoryTable } from "./components/HistoryTable";
 import { toast } from "sonner";
-import Link from "next/link";
-
+// import Link from "next/link";
+import { useAuthContext } from "@/lib/context/AuthContext";
+import { useRouter } from "next/navigation";
 interface HistoryItem {
   _id: string;
   transactionId: string;
@@ -39,12 +40,20 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<HistoryItem | null>(null);
+  // const [selectedOrder, setSelectedOrder] = useState<HistoryItem | null>(null);
+  const { user } = useAuthContext();
+
+  const router = useRouter();
 
   // Fetch orders từ API
   useEffect(() => {
+    if (!user) {
+      // Nếu chưa đăng nhập điều hướng về trang đăng nhập
+      router.push("/auth/login");
+      return;
+    }
     fetchOrders();
-  }, [page]);
+  }, [page, user]);
 
   const fetchOrders = async () => {
     try {
@@ -185,8 +194,8 @@ Email: ${item.account?.email || "N/A"}
               Quan trọng từ ngày 25/3/2024
             </h4>
             <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              Web chỉ lưu đơn hàng đã mua trong 7 ngày gần nhất. Vui lòng tải về và lưu trữ 
-              thông tin đơn hàng của bạn để tránh mất dữ liệu. Sau 7 ngày, đơn hàng sẽ tự động 
+              Web chỉ lưu đơn hàng đã mua trong 7 ngày gần nhất. Vui lòng tải về và lưu trữ
+              thông tin đơn hàng của bạn để tránh mất dữ liệu. Sau 7 ngày, đơn hàng sẽ tự động
               bị xóa khỏi hệ thống và không thể khôi phục.
             </p>
           </div>
@@ -264,7 +273,7 @@ Email: ${item.account?.email || "N/A"}
       {/* Info Footer */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <p className="text-sm text-blue-800 dark:text-blue-300">
-          💡 <strong>Mẹo:</strong> Bạn có thể tải xuống thông tin đơn hàng dưới định dạng TXT 
+          💡 <strong>Mẹo:</strong> Bạn có thể tải xuống thông tin đơn hàng dưới định dạng TXT
           hoặc Excel để lưu trữ lâu dài. Hãy thực hiện ngay để không bị mất dữ liệu sau 7 ngày.
         </p>
       </div>
