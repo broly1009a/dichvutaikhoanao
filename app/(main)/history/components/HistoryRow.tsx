@@ -68,45 +68,49 @@ export function HistoryRow({
 
       {/* Actions Column */}
       <td className="px-4 py-3">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 items-center flex-wrap">
           {/* View Detail Button */}
           <button
             onClick={() => onViewDetail(item.id)}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-sm"
-            title="Xem thêm"
+            className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-medium rounded transition-all whitespace-nowrap shadow-md hover:shadow-lg border border-blue-700 dark:border-blue-500"
+            type="button"
+            style={{ backgroundColor: '#2563eb' }}
           >
-            <EyeIcon className="w-4 h-4 inline mr-1" />
-            Xem thêm
+            <EyeIcon className="w-4 h-4 flex-shrink-0" />
+            <span>Xem</span>
           </button>
 
           {/* Download TXT Button */}
           <button
             onClick={() => onDownloadTxt(item.id)}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded transition-colors text-sm"
-            title="Tải TXT"
+            className="inline-flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-medium rounded transition-all whitespace-nowrap shadow-md hover:shadow-lg border border-red-700 dark:border-red-500"
+            type="button"
+            style={{ backgroundColor: '#dc2626' }}
           >
-            <DocumentArrowDownIcon className="w-4 h-4 inline mr-1" />
-            TXT
+            <DocumentArrowDownIcon className="w-4 h-4 flex-shrink-0" />
+            <span>TXT</span>
           </button>
 
           {/* Download Excel Button */}
           <button
             onClick={() => onDownloadExcel(item.id)}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm"
-            title="Tải EXCEL"
+            className="inline-flex items-center gap-1 px-3 py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-xs font-medium rounded transition-all whitespace-nowrap shadow-md hover:shadow-lg border border-green-700 dark:border-green-500"
+            type="button"
+            style={{ backgroundColor: '#16a34a' }}
           >
-            <DocumentChartBarIcon className="w-4 h-4 inline mr-1" />
-            EXCEL
+            <DocumentChartBarIcon className="w-4 h-4 flex-shrink-0" />
+            <span>XLS</span>
           </button>
 
           {/* Delete Button */}
           <button
             onClick={() => onDelete(item.id)}
-            className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors text-sm"
-            title="Xoá"
+            className="inline-flex items-center gap-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white text-xs font-medium rounded transition-all whitespace-nowrap shadow-md hover:shadow-lg border border-orange-700 dark:border-orange-500"
+            type="button"
+            style={{ backgroundColor: '#ea580c' }}
           >
-            <TrashIcon className="w-4 h-4 inline mr-1" />
-            Xoá
+            <TrashIcon className="w-4 h-4 flex-shrink-0" />
+            <span>Xoá</span>
           </button>
         </div>
       </td>

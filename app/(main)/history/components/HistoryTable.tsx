@@ -21,31 +21,31 @@ export function HistoryTable({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-100 dark:bg-slate-800">
+        <table className="w-full min-w-max">
+          <thead className="bg-gray-100 dark:bg-slate-800 sticky top-0">
             <tr className="border-b border-gray-200 dark:border-slate-700">
-              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 #
               </th>
-              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Mã giao dịch
               </th>
-              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Sản phẩm
               </th>
-              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Số lượng
               </th>
-              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Thanh toán
               </th>
-              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Thời gian
               </th>
-              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 text-sm font-semibold">
                 Ngày tạo
               </th>
-              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300">
+              <th className="px-4 py-3 text-left text-gray-700 dark:text-gray-300 text-sm font-semibold whitespace-nowrap">
                 Thao tác
               </th>
             </tr>
