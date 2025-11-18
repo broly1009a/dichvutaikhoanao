@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   SparklesIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -21,10 +22,11 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: HomeIcon, label: "Dashboard", page: "dashboard" },
   { icon: UsersIcon, label: "Users", page: "users" },
+  { icon: ShoppingBagIcon, label: "Products", page: "products" },
   { icon: ClipboardDocumentListIcon, label: "Bookings", page: "bookings" },
   { icon: CreditCardIcon, label: "Payments", page: "payments" },
-  { icon: CubeIcon, label: "Services", page: "services" },
-  { icon: GiftIcon, label: "Promotions", page: "promotions" },
+  { icon: CubeIcon, label: "Providers", page: "providers" },
+  { icon: GiftIcon, label: "Categories", page: "categories" },
   { icon: ChartBarIcon, label: "Reports", page: "reports" },
   { icon: Cog6ToothIcon, label: "Settings", page: "settings" },
 ];

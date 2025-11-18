@@ -1,26 +1,72 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { ProductTable } from "./components/ProductTable";
 import { StatsCards } from "./components/StatsCards";
-import { products } from "./data/products";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
 import HistoryPage from "./history/page";
 import DepositPage from "../app/deposit/page";
 import AdminPage from "../app/admin/page";
 
+interface Product {
+  _id: string;
+  id: string;
+  platform: string;
+  category: string;
+  title: string;
+  description: string;
+  price: number;
+  accountCount: number;
+  availableCount: number;
+  status: "available" | "soldout";
+  image?: string;
+}
+
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState<"home" | "history" | "deposit" | "admin">("home");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  // Fetch products and categories on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch("/api/products"),
+          fetch("/api/categories"),
+        ]);
+
+        if (productsRes.ok) {
+          const data = await productsRes.json();
+          setProducts(data.data || []);
+        }
+
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
+          setCategories(data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        toast.error("Lỗi khi tải dữ liệu");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleBuy = (productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -118,36 +164,68 @@ export default function App() {
         {currentPage === "home" ? (
           <>
             {/* Category Tabs */}
-            <CategoryTabs
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-            />
+            {!loading && (
+              <CategoryTabs
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+              />
+            )}
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto">
               <div className="container mx-auto p-4 lg:p-6 max-w-7xl">
-                {/* Stats Cards */}
-                <StatsCards />
-
-                {/* Product Tables */}
-                <div className="space-y-6">
-                  {productGroups.map((group, index) => (
-                    <ProductTable
-                      key={index}
-                      title={group.title}
-                      products={group.products}
-                      onBuy={handleBuy}
-                    />
-                  ))}
-                </div>
-
-                {/* Empty State */}
-                {filteredProducts.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Không có sản phẩm nào trong danh mục này
-                    </p>
+                {loading ? (
+                  <div className="flex items-center justify-center h-96">
+                    <div className="text-center">
+                      <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Đang tải sản phẩm...
+                      </p>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* Stats Cards */}
+                    <StatsCards />
+
+                    {/* Product Tables */}
+                    <div className="space-y-6">
+                      {productGroups.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Không có sản phẩm nào
+                          </p>
+                        </div>
+                      ) : (
+                        productGroups.map((group, index) => (
+                          <ProductTable
+                            key={index}
+                            title={group.title}
+                            products={group.products.map((p) => ({
+                              id: p.id,
+                              platform: p.platform as any,
+                              category: p.category,
+                              title: p.title,
+                              description: p.description,
+                              quantity: p.availableCount,
+                              price: p.price,
+                              status: p.status,
+                            }))}
+                            onBuy={handleBuy}
+                          />
+                        ))
+                      )}
+                    </div>
+
+                    {/* Empty State */}
+                    {filteredProducts.length === 0 && !loading && (
+                      <div className="text-center py-12">
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Không có sản phẩm nào trong danh mục này
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </main>

@@ -9,6 +9,9 @@ import { BookingsPage } from "./pages/BookingsPage";
 import { PaymentsPage } from "./pages/PaymentsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { ProvidersPage } from "./pages/ProvidersPage";
+import { CategoriesPage } from "./pages/CategoriesPage";
+import { ProductsPage } from "./pages/ProductsPage";
 import { UserModal } from "./components/UserModal";
 import { TransactionModal } from "./components/TransactionModal";
 import { User, Transaction } from "./data/mockData";
@@ -45,8 +48,11 @@ export default function AdminPage() {
     const titles: Record<string, string> = {
       dashboard: "Dashboard",
       users: "Quản lý người dùng",
+      products: "Quản lý sản phẩm",
       bookings: "Quản lý đơn đặt lịch",
       payments: "Quản lý giao dịch",
+      providers: "Quản lý Providers",
+      categories: "Quản lý Categories",
       services: "Quản lý dịch vụ",
       promotions: "Quản lý khuyến mãi",
       reports: "Báo cáo & Thống kê",
@@ -61,10 +67,16 @@ export default function AdminPage() {
         return <DashboardPage />;
       case "users":
         return <UsersPage onOpenUserModal={handleOpenUserModal} />;
+      case "products":
+        return <ProductsPage />;
       case "bookings":
         return <BookingsPage />;
       case "payments":
         return <PaymentsPage onOpenTransactionModal={handleOpenTransactionModal} />;
+      case "providers":
+        return <ProvidersPage />;
+      case "categories":
+        return <CategoriesPage />;
       case "reports":
         return <ReportsPage />;
       case "settings":

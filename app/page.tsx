@@ -1,3 +1,5 @@
-import App from "./App";
-export default App;
-  
+import { redirect } from "next/navigation";
+
+export default function Page() {
+  redirect("/(main)");
+}

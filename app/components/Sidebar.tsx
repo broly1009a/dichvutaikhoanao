@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import {
   HomeIcon,
   ShoppingBagIcon,
@@ -15,50 +17,60 @@ import {
   QuestionMarkCircleIcon,
   CodeBracketIcon,
   PhoneIcon,
+  SparklesIcon,
+  ShieldCheckIcon,
+  UserCircleIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
   icon: any;
   label: string;
-  href?: string;
-  page?: "home" | "history";
+  href: string;
   isHeader?: boolean;
 }
 
 const menuItems: MenuItem[] = [
-  { icon: HomeIcon, label: "Trang chủ", href: "/", page: "home" },
-  { icon: ShoppingBagIcon, label: "Mua tài khoản", href: "/buy", page: "home" },
+  { icon: HomeIcon, label: "Trang chủ", href: "/" },
+  { icon: ShoppingBagIcon, label: "Mua tài khoản", href: "/buy" },
+  { icon: ShoppingCartIcon, label: "Giỏ hàng", href: "/cart" },
   { icon: ArrowTrendingUpIcon, label: "Up follow Shopee, Lazada", href: "/follow" },
   { icon: ClipboardDocumentListIcon, label: "Đặt đơn Shopee", href: "/order" },
-  { icon: ClockIcon, label: "Lịch sử mua hàng", href: "/history", page: "history" },
+  { icon: ClockIcon, label: "Lịch sử mua hàng", href: "/history" },
   
-  { icon: null, label: "Nạp tiền", isHeader: true },
+  { icon: null, label: "Nạp tiền", isHeader: true, href: "" },
   { icon: BanknotesIcon, label: "Ngân hàng", href: "/deposit/bank" },
   { icon: DocumentTextIcon, label: "Hoá đơn", href: "/deposit/invoice" },
   { icon: CreditCardIcon, label: "Nạp thẻ", href: "/deposit/card" },
   
-  { icon: null, label: "Khác", isHeader: true },
+  { icon: null, label: "Tài khoản", isHeader: true, href: "" },
+  { icon: UserCircleIcon, label: "Đăng nhập / Đăng ký", href: "/auth/login" },
+  
+  { icon: null, label: "Khác", isHeader: true, href: "" },
   { icon: NewspaperIcon, label: "Bài viết", href: "/posts" },
   { icon: WrenchScrewdriverIcon, label: "Công cụ", href: "/tools" },
   { icon: QuestionMarkCircleIcon, label: "FAQ", href: "/faq" },
   { icon: CodeBracketIcon, label: "Tài liệu API", href: "/api-docs" },
   { icon: PhoneIcon, label: "Liên hệ", href: "/contact" },
+  
+  { icon: null, label: "Quản trị", isHeader: true, href: "" },
+  { icon: ShieldCheckIcon, label: "Admin Panel", href: "/admin" },
 ];
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigate?: (page: "home" | "history") => void;
 }
 
-export function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [activeItem, setActiveItem] = useState("Trang chủ");
 
   const handleItemClick = (item: MenuItem) => {
     setActiveItem(item.label);
-    if (item.page && onNavigate) {
-      onNavigate(item.page);
-    }
+    router.push(item.href);
+    onClose();
   };
 
   return (
@@ -66,7 +78,7 @@ export function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
           onClick={onClose}
         />
       )}
@@ -74,59 +86,72 @@ export function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-64 bg-[#0f172a] z-50
+          fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] z-50
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static
-          flex flex-col
+          flex flex-col shadow-2xl
         `}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">HH</span>
+        <div className="p-6 border-b border-slate-700/50">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform">
+                <SparklesIcon className="w-6 h-6 text-white" />
+              </div>
             </div>
             <div>
-              <h1 className="text-white">HH-SHOPEE</h1>
-              <p className="text-xs text-slate-400">Shop tài khoản uy tín</p>
+              <h1 className="text-white text-lg tracking-wide">HH-SHOPEE</h1>
+              <p className="text-xs text-slate-400">Shop tài khoản uy tín #1</p>
             </div>
           </div>
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-3">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <ul className="space-y-1">
             {menuItems.map((item, index) => {
               if (item.isHeader) {
                 return (
-                  <li key={index} className="pt-6 pb-2 px-3">
-                    <span className="text-xs text-slate-500 uppercase tracking-wider">
-                      {item.label}
-                    </span>
+                  <li key={index} className="pt-6 pb-2 px-3 first:pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
+                      <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">
+                        {item.label}
+                      </span>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
+                    </div>
                   </li>
                 );
               }
 
               const Icon = item.icon;
-              const isActive = activeItem === item.label;
+              const isActive = pathname === item.href;
 
               return (
                 <li key={index}>
                   <button
                     onClick={() => handleItemClick(item)}
                     className={`
-                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                      transition-all duration-200
+                      w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                      transition-all duration-300 group relative overflow-hidden
                       ${
                         isActive
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/50"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/50 scale-105"
+                          : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                       }
                     `}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-sm">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 animate-pulse"></div>
+                    )}
+                    <Icon className={`w-5 h-5 flex-shrink-0 relative z-10 ${isActive ? 'animate-bounce-slow' : 'group-hover:scale-110 transition-transform'}`} />
+                    <span className="text-sm font-medium relative z-10">{item.label}</span>
+                    {isActive && (
+                      <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    )}
                   </button>
                 </li>
               );
@@ -135,10 +160,17 @@ export function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-700">
-          <div className="text-xs text-slate-500 text-center">
-            <p>© 2024 HH-SHOPEE</p>
-            <p className="mt-1">Version 1.0.0</p>
+        <div className="p-4 border-t border-slate-700/50 bg-slate-900/50">
+          <div className="text-xs text-slate-400 text-center space-y-1">
+            <p className="flex items-center justify-center gap-1">
+              <span className="text-orange-500">♥</span> Made with love
+            </p>
+            <p className="text-slate-500">© 2024 HH-SHOPEE</p>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <span className="px-2 py-1 bg-green-500/10 text-green-400 rounded text-xs">v1.0.0</span>
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-green-400 text-xs">Online</span>
+            </div>
           </div>
         </div>
       </aside>

@@ -7,8 +7,12 @@ import {
   MoonIcon,
   SunIcon,
   UserCircleIcon,
+  ArrowRightOnRectangleIcon,
+  CogIcon,
 } from "@heroicons/react/24/outline";
 import { Badge } from "./ui/badge";
+import Link from "next/link";
+import { useAuthContext } from "@/lib/context/AuthContext";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -16,11 +20,22 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const [isDark, setIsDark] = useState(false);
-  const balance = 1250000; // Mock balance
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, isLoading, logout } = useAuthContext();
+  const balance = user?.balance || 0;
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowUserMenu(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -76,20 +91,82 @@ export function Header({ onMenuClick }: HeaderProps) {
           </button>
 
           {/* User profile */}
-          <div className="hidden md:flex items-center gap-2 pl-2 ml-2 border-l border-gray-200 dark:border-slate-700">
-            <div className="text-right">
-              <p className="text-sm text-gray-900 dark:text-gray-100">Admin User</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">admin@hhshopee.vn</p>
-            </div>
-            <button className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-              <UserCircleIcon className="w-8 h-8 text-gray-700 dark:text-gray-300" />
-            </button>
-          </div>
+          {!isLoading && (
+            <>
+              {user ? (
+                <div className="hidden md:flex items-center gap-2 pl-2 ml-2 border-l border-gray-200 dark:border-slate-700 relative">
+                  <div className="text-right">
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{user.fullName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <UserCircleIcon className="w-8 h-8 text-gray-700 dark:text-gray-300" />
+                  </button>
+
+                  {/* User Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50">
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                      >
+                        👤 Hồ sơ
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                      >
+                        <CogIcon className="w-4 h-4 inline mr-2" />
+                        Cài đặt
+                      </Link>
+                      <hr className="my-1 border-gray-200 dark:border-slate-700" />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition"
+                      >
+                        <ArrowRightOnRectangleIcon className="w-4 h-4 inline mr-2" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="hidden md:flex items-center gap-2 pl-2 ml-2 border-l border-gray-200 dark:border-slate-700 px-4 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition"
+                >
+                  <UserCircleIcon className="w-6 h-6" />
+                  Đăng nhập
+                </Link>
+              )}
+            </>
+          )}
 
           {/* User icon mobile */}
-          <button className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-            <UserCircleIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-          </button>
+          {!isLoading && (
+            <>
+              {user ? (
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative"
+                >
+                  <UserCircleIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                </button>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  <UserCircleIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </Link>
+              )}
+            </>
+          )}
         </div>
       </div>
     </header>
