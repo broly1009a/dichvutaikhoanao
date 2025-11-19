@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import axios from 'axios';
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { orderCode, amount, description, cancelUrl, returnUrl } = body;

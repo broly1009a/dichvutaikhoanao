@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { paymentCache } from "@/lib/payment-cache";
 
 /**
- * GET /api/webhooks/stream?orderCode=123456
+ * GET /api/webhooks/stream?uuid=xxx or /api/webhooks/stream?orderCode=xxx
  * Server-Sent Events endpoint for real-time payment status updates
  * 
+ * Prefers UUID (persistent across QR recreations) over orderCode
+ * 
  * Usage:
- * const eventSource = new EventSource('/api/webhooks/stream?orderCode=123456');
+ * const eventSource = new EventSource('/api/webhooks/stream?uuid=xxx');
  * eventSource.onmessage = (event) => {
  *   const data = JSON.parse(event.data);
  *   console.log('Payment status:', data);
@@ -15,11 +17,15 @@ import { paymentCache } from "@/lib/payment-cache";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const uuid = searchParams.get("uuid");
   const orderCode = searchParams.get("orderCode");
+  
+  // UUID is preferred (persistent across QR recreations)
+  const key = uuid || orderCode;
 
-  if (!orderCode) {
+  if (!key) {
     return NextResponse.json(
-      { error: "orderCode is required" },
+      { error: "uuid or orderCode is required" },
       { status: 400 }
     );
   }
@@ -31,7 +37,7 @@ export async function GET(request: NextRequest) {
   const customReadable = new ReadableStream({
     async start(controller) {
       // Send initial status if exists in cache
-      const cachedStatus = paymentCache.get(orderCode);
+      const cachedStatus = paymentCache.get(key);
       if (cachedStatus) {
         controller.enqueue(
           encoder.encode(
@@ -47,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Subscribe to updates
-      unsubscribe = paymentCache.subscribe(orderCode, (data) => {
+      unsubscribe = paymentCache.subscribe(key, (data) => {
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
         );

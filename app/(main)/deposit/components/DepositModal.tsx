@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { XMarkIcon, BanknotesIcon, GiftIcon, ReceiptPercentIcon, CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import QRCodeBox from "../../../components/QRCodeBox";
+import { useAuth } from "@/lib/hooks/useAuth";
+
 interface DepositModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateInvoice: (amount: number) => void;
+  prefilledAmount?: number; // For retry from invoices
 }
 
 interface PayOSInfo {
@@ -17,7 +20,8 @@ interface PayOSInfo {
   qrCode?: string;
 }
 
-export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalProps) {
+export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount }: DepositModalProps) {
+  const { user } = useAuth();
   const [amount, setAmount] = useState<string>("");
   const [numericAmount, setNumericAmount] = useState<number>(0);
   const [payosQr, setPayosQr] = useState<string>("");
@@ -54,13 +58,13 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
   };
 
   // Check payment status via SSE
-  const startPaymentCheckingSSE = (orderCodeParam: string) => {
+  const startPaymentCheckingSSE = (orderCodeParam: string, uuidParam: string) => {
     setIsCheckingPayment(true);
     setPaymentStatus("pending");
-    console.log('Starting SSE payment checking for orderCode:', orderCodeParam);
+    console.log('Starting SSE payment checking for UUID:', uuidParam);
 
-    // Setup SSE connection
-    const eventSource = new EventSource(`/api/webhooks/stream?orderCode=${orderCodeParam}`);
+    // Setup SSE connection - use UUID as primary key
+    const eventSource = new EventSource(`/api/webhooks/stream?uuid=${uuidParam}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
@@ -93,8 +97,8 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
       eventSource.close();
       eventSourceRef.current = null;
       
-      // Retry with 5-second polling interval
-      startPaymentCheckingPolling(orderCodeParam);
+      // Retry with 5-second polling interval using UUID
+      startPaymentCheckingPolling(uuidParam);
     };
 
     // Set timeout for 10 minutes
@@ -112,8 +116,8 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
   };
 
   // Fallback polling method
-  const startPaymentCheckingPolling = (orderCodeParam: string) => {
-    console.log('Using polling fallback with 5-second interval');
+  const startPaymentCheckingPolling = (uuidParam: string) => {
+    console.log('Using polling fallback with 5-second interval for UUID:', uuidParam);
     
     let pollCount = 0;
     const maxPolls = 120; // 120 * 5s = 10 minutes
@@ -129,7 +133,8 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
       }
 
       try {
-        const response = await fetch(`/api/webhooks?orderCode=${orderCodeParam}`);
+        // Search by UUID (unique for each deposit session)
+        const response = await fetch(`/api/webhooks?uuid=${uuidParam}`);
         const result = await response.json();
 
         if (result.success && result.data === "done") {
@@ -153,12 +158,57 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
     if (numericAmount < 10000) return;
 
     const newUuid = generateUUID();
+    
+    // Check if UUID already has a pending payment
+    try {
+      const limitCheck = await fetch(`/api/webhooks/check-session-limit?uuid=${newUuid}`);
+      const limitData = await limitCheck.json();
+      
+      if (limitData.exists) {
+        console.log('Session already exists, continuing payment...');
+        // Session exists, continue with same UUID
+        setUuid(newUuid);
+        const newOrderCode = Math.floor(Math.random() * 1000000);
+        setOrderCode(newOrderCode.toString());
+        
+        try {
+          const response = await fetch("/api/payos-link", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderCode: newOrderCode,
+              amount: numericAmount,
+              description: `dat coc ${newUuid}`.substring(0, 25),
+              cancelUrl: window.location.origin + "/thanh-toan-that-bai",
+              returnUrl: window.location.origin + "/thanh-toan-thanh-cong"
+            })
+          });
+          
+          const data = await response.json();
+          const payosData = data.data || data;
+          
+          setPayosInfo(payosData);
+          setPayosQr(payosData.qrCode || "");
+          
+          // Start checking with same UUID
+          startPaymentCheckingSSE(newOrderCode.toString(), newUuid);
+        } catch (error) {
+          console.error("Error generating PayOS QR:", error);
+          setPayosQr("");
+          setPayosInfo(null);
+        }
+        return;
+      }
+    } catch (error) {
+      console.warn('Could not check session limit, continuing anyway:', error);
+    }
+
     setUuid(newUuid);
     
     const content = `dat coc ${newUuid}`;
     const newOrderCode = Math.floor(Math.random() * 1000000);
-    setOrderCode(newOrderCode.toString());  // Sử dụng orderCode số làm string
-    console.log('Set orderCode to:', newOrderCode);
+    setOrderCode(newOrderCode.toString());
+    console.log('Set orderCode to:', newOrderCode, 'UUID:', newUuid);
     
     let safeContent = content;
     if (safeContent.length > 25) safeContent = safeContent.slice(0, 25);
@@ -168,7 +218,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderCode: newOrderCode,  // Vẫn gửi số ngẫu nhiên đến PayOS
+          orderCode: newOrderCode,
           amount: numericAmount,
           description: safeContent,
           cancelUrl: window.location.origin + "/thanh-toan-that-bai",
@@ -181,14 +231,35 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
       
       setPayosInfo(payosData);
       setPayosQr(payosData.qrCode || "");
+
+      // Create invoice record
+      if (user?._id) {
+        try {
+          await fetch('/api/invoices/create-from-deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user._id,
+              uuid: newUuid,
+              orderCode: newOrderCode,
+              amount: numericAmount,
+              bonus: bonusAmount,
+              description: safeContent
+            })
+          });
+          console.log('Invoice created for UUID:', newUuid);
+        } catch (error) {
+          console.warn('Could not create invoice record:', error);
+        }
+      }
     } catch (error) {
       console.error("Error generating PayOS QR:", error);
       setPayosQr("");
       setPayosInfo(null);
     }
 
-    // Start checking payment status
-    startPaymentCheckingSSE(newOrderCode.toString());
+    // Start checking payment status using UUID (persistent across QR recreations)
+    startPaymentCheckingSSE(newOrderCode.toString(), newUuid);
   };
 
   // Handle amount input
@@ -251,13 +322,18 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      // If prefilled amount, set it
+      if (prefilledAmount) {
+        setAmount(prefilledAmount.toString());
+        setNumericAmount(prefilledAmount);
+      }
     } else {
       document.body.style.overflow = "unset";
     }
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, [isOpen, prefilledAmount]);
 
   if (!isOpen) return null;
 

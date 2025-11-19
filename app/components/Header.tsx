@@ -10,6 +10,7 @@ import {
   ArrowRightOnRectangleIcon,
   CogIcon,
   WalletIcon,
+  ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import { Badge } from "./ui/badge";
 import Link from "next/link";
@@ -122,6 +123,14 @@ export function Header({ onMenuClick }: HeaderProps) {
                         className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                       >
                         👤 Hồ sơ
+                      </Link>
+                      <Link
+                        href="/invoices"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                      >
+                        <ReceiptPercentIcon className="w-4 h-4 inline mr-2" />
+                        Hóa đơn
                       </Link>
                       <Link
                         href="/settings"

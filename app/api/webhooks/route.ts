@@ -2,7 +2,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Webhook from '@/lib/models/Webhook';
+import Invoice from '@/lib/models/Invoice';
 import { paymentCache } from '@/lib/payment-cache';
+import {
+  verifyPayOSSignature,
+  requestDeduplicator,
+  retryWithBackoff,
+  isRetryableError
+} from '@/lib/utils/payment-utils';
 
 interface WebhookRequestData {
   code?: string;
@@ -47,7 +54,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(req.url);
     const description: string | null = searchParams.get('description');
     const amount: string | null = searchParams.get('amount');
-    const orderCode: string | null = searchParams.get('orderCode'); // Thêm parameter cho PayOS
+    const orderCode: string | null = searchParams.get('orderCode');
+    const uuid: string | null = searchParams.get('uuid'); // Search by UUID for persistent tracking
     const page: string | null = searchParams.get('page');
     const limitParam: string | null = searchParams.get('limit');
 
@@ -55,8 +63,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     let limit: number = 10;
     let skip: number = 0;
 
+    // If UUID provided (primary method - persistent across QR recreations)
+    if (uuid) {
+      console.log('Searching for UUID:', uuid);
+      query = {
+        'data.description': { $regex: uuid, $options: "i" }
+      };
+      limit = 1;
+    }
     // If description and amount provided, search for specific transaction (VietQR)
-    if (description && amount) {
+    else if (description && amount) {
       query = {
         'data.description': { $regex: description, $options: "i" },
         'data.amount': parseInt(amount)
@@ -86,12 +102,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .lean();
 
     // If searching for specific transaction, return simplified response
-    if ((description && amount) || orderCode) {
+    if ((description && amount) || orderCode || uuid) {
       if (webhooks.length > 0) {
-        const status = webhooks[0]?.data?.orderCode ? "done" : "done";
+        const status = "done";
         
         // Update cache with payment status
-        if (orderCode) {
+        // For UUID, use it as cache key; for orderCode, use orderCode
+        if (uuid) {
+          paymentCache.set(uuid, status, webhooks[0]?.data?.amount);
+        } else if (orderCode) {
           paymentCache.set(orderCode, status, webhooks[0]?.data?.amount);
         }
         
@@ -156,23 +175,42 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       });
     }
 
-    // Create webhook document
+    // Create webhook document with TTL and status
     const webhook = new Webhook({
       code: webhookData.code || '00',
       desc: webhookData.desc || 'success',
       success: webhookData.success !== undefined ? webhookData.success : true,
-      data: webhookData.data
+      data: webhookData.data,
+      status: 'completed', // Payment received and completed
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // Auto-delete after 24 hours
     });
 
     const savedWebhook = await webhook.save();
 
-    // Update cache with payment status
+    // Update cache with payment status using UUID from description
+    const uuid = webhookData.data.description;
+    paymentCache.set(uuid, "done", webhookData.data.amount);
+
+    // Also update cache with orderCode if available
     if (webhookData.data.orderCode) {
       paymentCache.set(
         webhookData.data.orderCode.toString(),
         "done",
         webhookData.data.amount
       );
+    }
+
+    // Try to update associated invoice if exists
+    try {
+      const invoice = await Invoice.findOne({ uuid });
+      if (invoice) {
+        invoice.status = 'completed';
+        invoice.paymentDate = new Date();
+        await invoice.save();
+        console.log(`Invoice ${uuid} marked as completed`);
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error);
     }
 
     return NextResponse.json({
