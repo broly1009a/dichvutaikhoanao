@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 
+// Import all models to ensure they're registered
+import './models';
+
 // Skip initialization during build
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && process.env.__VERCEL_BUILD_RUNNING === 'true';
 

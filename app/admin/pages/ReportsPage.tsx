@@ -1,15 +1,94 @@
 "use client";
 
-import { monthlyRevenue, transactionsByType, users } from "../data/mockData";
+import { useState, useEffect } from "react";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-export function ReportsPage() {
-  // Top users by balance
-  const topUsers = [...users]
-    .sort((a, b) => b.balance - a.balance)
-    .slice(0, 5);
+interface ReportsData {
+  monthlyRevenue: Array<{ month: string; revenue: number }>;
+  transactionsByType: Array<{ name: string; value: number; color: string }>;
+  topUsers: Array<{
+    id: string;
+    rank: number;
+    email: string;
+    username: string;
+    balance: number;
+    role: string;
+    totalSpent: number;
+    totalPurchased: number;
+  }>;
+  monthlyStats: {
+    month: number;
+    year: number;
+    total: number;
+    completed: number;
+    pending: number;
+    failed: number;
+    totalRevenue: number;
+    totalBonus: number;
+  };
+}
 
-  return (
+export function ReportsPage() {
+  const [reportsData, setReportsData] = useState<ReportsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  const fetchReports = async (selectedMonth: number, selectedYear: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/admin/reports?month=${selectedMonth}&year=${selectedYear}`,
+        { credentials: 'include' }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch reports data');
+      }
+
+      const result = await response.json();
+      setReportsData(result.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Reports fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports(month, year);
+  }, []);
+
+  const handleApplyFilter = () => {
+    fetchReports(month, year);
+  };
+
+  // Top users by balance
+  const topUsers = reportsData?.topUsers || [];
+
+  if (loading && !reportsData) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gray-200 dark:bg-slate-700 rounded-2xl h-32 animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-gray-200 dark:bg-slate-700 rounded-2xl h-80 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-600 dark:text-red-400">Error: {error}</p>
+      </div>
+    );
+  }
+ return (
     <div className="space-y-6">
       {/* Filter Section */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6">
@@ -19,10 +98,14 @@ export function ReportsPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tháng
             </label>
-            <select className="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                <option key={month} value={month}>
-                  Tháng {month}
+            <select
+              value={month}
+              onChange={(e) => setMonth(parseInt(e.target.value))}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <option key={m} value={m}>
+                  Tháng {m}
                 </option>
               ))}
             </select>
@@ -31,14 +114,23 @@ export function ReportsPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Năm
             </label>
-            <select className="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select
+              value={year}
+              onChange={(e) => setYear(parseInt(e.target.value))}
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               <option value="2024">2024</option>
               <option value="2023">2023</option>
+              <option value="2025">2025</option>
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all font-medium">
-              Áp dụng lọc
+            <button
+              onClick={handleApplyFilter}
+              disabled={loading}
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all font-medium disabled:opacity-50"
+            >
+              {loading ? 'Đang tải...' : 'Áp dụng lọc'}
             </button>
           </div>
         </div>
@@ -49,52 +141,57 @@ export function ReportsPage() {
         {/* Revenue Line Chart */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6">
           <h3 className="text-gray-900 dark:text-white mb-4">Doanh thu theo tháng</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyRevenue}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#3b82f6"
-                strokeWidth={3}
-                name="Doanh thu (VNĐ)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {reportsData?.monthlyRevenue ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={reportsData.monthlyRevenue}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="month" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1e293b",
+                    border: "1px solid #334155",
+                    borderRadius: "8px",
+                  }}
+                  formatter={(value: any) => value.toLocaleString('vi-VN')}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  name="Doanh thu (VNĐ)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : null}
         </div>
 
         {/* Transaction Types Pie Chart */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 p-6">
           <h3 className="text-gray-900 dark:text-white mb-4">Giao dịch theo loại</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={transactionsByType}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {transactionsByType.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          {reportsData?.transactionsByType && reportsData.transactionsByType.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={reportsData.transactionsByType}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {reportsData.transactionsByType.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : null}
         </div>
       </div>
 
@@ -114,13 +211,16 @@ export function ReportsPage() {
                   Hạng
                 </th>
                 <th className="px-6 py-4 text-left text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wider font-bold">
-                  Người dùng
+                  Email
                 </th>
                 <th className="px-6 py-4 text-left text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wider font-bold">
-                  Email
+                  Username
                 </th>
                 <th className="px-6 py-4 text-center text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wider font-bold">
                   Số dư
+                </th>
+                <th className="px-6 py-4 text-center text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wider font-bold">
+                  Tổng chi tiêu
                 </th>
                 <th className="px-6 py-4 text-center text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wider font-bold">
                   Vai trò
@@ -128,7 +228,7 @@ export function ReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-              {topUsers.map((user, index) => (
+              {topUsers.slice(0, 10).map((user: any, index: number) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -144,19 +244,15 @@ export function ReportsPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full ring-2 ring-gray-200 dark:ring-slate-700"
-                      />
-                      <span className="text-gray-900 dark:text-white font-medium">{user.name}</span>
-                    </div>
-                  </td>
                   <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className="text-gray-900 dark:text-white font-medium">{user.username}</span>
+                  </td>
                   <td className="px-6 py-4 text-center text-gray-900 dark:text-white font-bold">
                     {user.balance.toLocaleString("vi-VN")} đ
+                  </td>
+                  <td className="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
+                    {user.totalSpent.toLocaleString("vi-VN")} đ
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
