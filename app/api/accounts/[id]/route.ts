@@ -6,10 +6,10 @@ import Order from '@/lib/models/Order';
 // GET /api/accounts/[id] - Lấy chi tiết account (chỉ sau khi mua)
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const params = await context.params;
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function GET(
       );
     }
 
-    const accountId = params.id;
+    const accountId = id;
     const userId = request.headers.get('x-user-id'); // Lấy từ header
 
     if (!userId) {

@@ -7,9 +7,10 @@ import jwt from 'jsonwebtoken';
 // PUT /api/admin/faq/[id] - Cập nhật FAQ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -48,7 +49,7 @@ export async function PUT(
     }
 
     const updatedFaq = await FAQ.findByIdAndUpdate(
-      params.id,
+      id,
       {
         question: question.trim(),
         answer: answer.trim(),
@@ -83,9 +84,10 @@ export async function PUT(
 // PATCH /api/admin/faq/[id] - Cập nhật một phần (ví dụ: toggle isActive)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -115,7 +117,7 @@ export async function PATCH(
     const body = await request.json();
 
     const updatedFaq = await FAQ.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true }
     );
@@ -144,9 +146,10 @@ export async function PATCH(
 // DELETE /api/admin/faq/[id] - Xóa FAQ
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -173,7 +176,7 @@ export async function DELETE(
       );
     }
 
-    const deletedFaq = await FAQ.findByIdAndDelete(params.id);
+    const deletedFaq = await FAQ.findByIdAndDelete(id);
 
     if (!deletedFaq) {
       return NextResponse.json(

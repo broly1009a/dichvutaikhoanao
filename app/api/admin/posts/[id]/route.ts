@@ -7,9 +7,10 @@ import jwt from 'jsonwebtoken';
 // PUT /api/admin/posts/[id] - Cập nhật post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -49,7 +50,7 @@ export async function PUT(
 
     // Check if slug exists (excluding current post)
     if (slug) {
-      const existingPost = await Post.findOne({ slug, _id: { $ne: params.id } });
+      const existingPost = await Post.findOne({ slug, _id: { $ne: id } });
       if (existingPost) {
         return NextResponse.json(
           { success: false, error: 'Slug already exists' },
@@ -59,7 +60,7 @@ export async function PUT(
     }
 
     const updatedPost = await Post.findByIdAndUpdate(
-      params.id,
+      id,
       {
         title: title.trim(),
         content: content.trim(),
@@ -98,9 +99,10 @@ export async function PUT(
 // PATCH /api/admin/posts/[id] - Cập nhật một phần (ví dụ: toggle isPublished)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -130,7 +132,7 @@ export async function PATCH(
     const body = await request.json();
 
     const updatedPost = await Post.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true }
     );
@@ -159,9 +161,10 @@ export async function PATCH(
 // DELETE /api/admin/posts/[id] - Xóa post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const conn = await connectDB();
     if (!conn) {
       return NextResponse.json(
@@ -188,7 +191,7 @@ export async function DELETE(
       );
     }
 
-    const deletedPost = await Post.findByIdAndDelete(params.id);
+    const deletedPost = await Post.findByIdAndDelete(id);
 
     if (!deletedPost) {
       return NextResponse.json(
