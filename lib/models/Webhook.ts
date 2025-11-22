@@ -27,6 +27,7 @@ export interface IWebhook extends Document {
   success: boolean;
   data: IWebhookData;
   signature: string; // Move signature to root level
+  status: 'pending' | 'completed' | 'expired';
   expiresAt: Date; // TTL: auto-delete after 24 hours
   createdAt: Date;
   updatedAt: Date;
