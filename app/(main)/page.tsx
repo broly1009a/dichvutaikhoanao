@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { CategoryTabs } from "@/app/components/CategoryTabs";
 import { ProductTable } from "@/app/components/ProductTable";
-import { StatsCards } from "@/app/components/StatsCards";
+// import { StatsCards } from "@/app/components/StatsCards";
 import { toast } from "sonner";
 
 interface Product {

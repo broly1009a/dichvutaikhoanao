@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+// import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   HomeIcon,
@@ -19,15 +19,16 @@ import {
   PhoneIcon,
   SparklesIcon,
   ShieldCheckIcon,
-  UserCircleIcon,
+  // UserCircleIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
-
+import { useAuthContext } from "@/lib/context/AuthContext";
 interface MenuItem {
   icon: any;
   label: string;
   href: string;
   isHeader?: boolean;
+  adminOnly?: boolean;
 }
 
 const menuItems: MenuItem[] = [
@@ -53,8 +54,8 @@ const menuItems: MenuItem[] = [
   { icon: CodeBracketIcon, label: "Tài liệu API", href: "/api-docs" },
   { icon: PhoneIcon, label: "Liên hệ", href: "/contact" },
   
-  { icon: null, label: "Quản trị", isHeader: true, href: "" },
-  { icon: ShieldCheckIcon, label: "Admin Panel", href: "/admin" },
+  { icon: null, label: "Quản trị", isHeader: true, href: "", adminOnly: true },
+  { icon: ShieldCheckIcon, label: "Admin Panel", href: "/admin", adminOnly: true },
 ];
 
 interface SidebarProps {
@@ -66,7 +67,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [activeItem, setActiveItem] = useState("Trang chủ");
-
+  const { user } = useAuthContext();
   const handleItemClick = (item: MenuItem) => {
     setActiveItem(item.label);
     router.push(item.href);
@@ -113,6 +114,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <ul className="space-y-1">
             {menuItems.map((item, index) => {
+              // Skip admin-only items if user is not admin
+              if (item.adminOnly && user?.role !== 'admin') {
+                return null;
+              }
+
               if (item.isHeader) {
                 return (
                   <li key={index} className="pt-6 pb-2 px-3 first:pt-2">

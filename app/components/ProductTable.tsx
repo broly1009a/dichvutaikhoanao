@@ -207,100 +207,163 @@ export function ProductTable({ title, products, onBuy }: ProductTableProps) {
 
       {/* Modal Nhập Số Lượng */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Nhập số lượng mua
-            </h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 p-8 w-full max-w-md animate-in zoom-in-95 duration-300">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <ShoppingCartIcon className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Xác nhận mua hàng
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Nhập số lượng bạn muốn mua
+              </p>
+            </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-sm">
-                {error}
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-400 text-sm font-medium shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-500">⚠️</span>
+                  {error}
+                </div>
               </div>
             )}
 
+            {/* Quantity Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 Số lượng
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border-2 border-gray-200 dark:border-slate-700">
                 <Button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white w-10 h-10"
+                  className="flex-shrink-0 w-12 h-12 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border-2 border-gray-200 dark:border-slate-600"
                   size="sm"
                 >
-                  −
+                  <span className="text-xl font-bold">−</span>
                 </Button>
                 <input
                   type="number"
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-center font-medium"
+                  className="flex-1 min-w-0 px-4 py-3 border-2 border-transparent rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-center font-bold text-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
                 />
                 <Button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white w-10 h-10"
+                  className="flex-shrink-0 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                   size="sm"
                 >
-                  +
+                  <span className="text-xl font-bold">+</span>
                 </Button>
               </div>
             </div>
 
-            {/* Hiển thị thông tin giá và số dư */}
+            {/* Price Information */}
             {selectedProductId && (
-              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Giá mỗi cái:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+              <div className="mb-6 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 shadow-sm">
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Giá mỗi cái:</span>
+                    <span className="font-bold text-gray-900 dark:text-white text-lg">
                       {products
                         .find((p) => p._id === selectedProductId)
-                        ?.price.toLocaleString("vi-VN")}{" "}
-                      đ
+                        ?.price.toLocaleString("vi-VN")} đ
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Tổng tiền:</span>
-                    <span className="font-semibold text-red-600 dark:text-red-400">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Tổng tiền:</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400 text-xl">
                       {(
                         (products.find((p) => p._id === selectedProductId)?.price || 0) *
                         quantity
-                      ).toLocaleString("vi-VN")}{" "}
-                      đ
+                      ).toLocaleString("vi-VN")} đ
                     </span>
                   </div>
-                  <div className="border-t border-blue-200 dark:border-blue-700 pt-2 mt-2 flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Số dư của bạn:</span>
-                    <span
-                      className={`font-semibold ${
-                        user && user.balance >= (products.find((p) => p._id === selectedProductId)?.price || 0) * quantity
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {user?.balance.toLocaleString("vi-VN")} đ
-                    </span>
+                  <div className="border-t-2 border-blue-200 dark:border-blue-700 pt-3 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">Số dư của bạn:</span>
+                      <span
+                        className={`font-bold text-lg ${
+                          user && user.balance >= (products.find((p) => p._id === selectedProductId)?.price || 0) * quantity
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {user?.balance.toLocaleString("vi-VN")} đ
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Action Buttons */}
             <div className="flex gap-3">
               <Button
                 onClick={() => setIsModalOpen(false)}
                 variant="outline"
-                className="flex-1 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800"
+                className="flex-1 py-3 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl font-semibold transition-all duration-200 hover:shadow-md"
               >
                 Hủy
               </Button>
               <Button
+                onClick={() => {
+                  // Thêm vào giỏ hàng
+                  const product = products.find((p) => p._id === selectedProductId);
+                  if (product) {
+                    const cartItem = {
+                      id: product._id,
+                      productId: product._id,
+                      title: product.title,
+                      price: product.price,
+                      quantity: quantity,
+                      platform: product.platform
+                    };
+
+                    // Lưu vào localStorage
+                    const existingCart = localStorage.getItem("cart");
+                    let cart = [];
+                    if (existingCart) {
+                      try {
+                        cart = JSON.parse(existingCart);
+                      } catch (error) {
+                        console.error("Failed to parse cart:", error);
+                      }
+                    }
+
+                    // Kiểm tra sản phẩm đã có trong giỏ
+                    const existingItemIndex = cart.findIndex((item: any) => item.productId === product._id);
+                    if (existingItemIndex >= 0) {
+                      cart[existingItemIndex].quantity += quantity;
+                    } else {
+                      cart.push(cartItem);
+                    }
+
+                    localStorage.setItem("cart", JSON.stringify(cart));
+                    toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
+                    setIsModalOpen(false);
+                  }
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                🛒 Thêm vào giỏ
+              </Button>
+              <Button
                 onClick={handleConfirmPurchase}
                 disabled={isLoading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white disabled:opacity-50"
+                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                {isLoading ? "Đang xử lý..." : "Xác nhận mua"}
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Đang xử lý...
+                  </div>
+                ) : (
+                  "🛍️ Mua ngay"
+                )}
               </Button>
             </div>
           </div>
