@@ -47,12 +47,26 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .limit(limitNum)
       .lean();
 
-    // Get total count
+    // Check and update expired pending invoices
+    const now = new Date();
+    const updatedInvoices = await Promise.all(
+      invoices.map(async (invoice: any) => {
+        if (invoice.status === 'pending' && invoice.expiresAt && invoice.expiresAt < now) {
+          // Update status to expired in database
+          await Invoice.findByIdAndUpdate(invoice._id, { status: 'expired' });
+          // Return updated invoice data
+          return { ...invoice, status: 'expired' };
+        }
+        return invoice;
+      })
+    );
+
+    // Get total count (may need to recalculate if status filter was applied)
     const total = await Invoice.countDocuments(query);
 
     return NextResponse.json({
       success: true,
-      data: invoices,
+      data: updatedInvoices,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -128,7 +142,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       status: 'pending',
       description,
       paymentMethod,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours (thay vì 30 ngày)
     });
 
     const saved = await invoice.save();
@@ -249,9 +263,17 @@ export async function GET_SINGLE(req: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Check if invoice is expired
+    let invoiceData = invoice.toObject();
+    if (invoice.status === 'pending' && invoice.expiresAt && invoice.expiresAt < new Date()) {
+      // Update status to expired in database
+      await Invoice.findByIdAndUpdate(invoice._id, { status: 'expired' });
+      invoiceData.status = 'expired';
+    }
+
     return NextResponse.json({
       success: true,
-      data: invoice
+      data: invoiceData
     });
   } catch (error) {
     console.error('Get invoice error:', error);
