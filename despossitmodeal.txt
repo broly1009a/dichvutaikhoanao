@@ -78,7 +78,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
       let response;
       
       if (paymentMethod === "vietqr" && uuid) {
-        const description = `dat coc ${uuid}`;
+        const description = `nap tien ${uuid}`;
         response = await fetch(`/api/webhooks?description=${encodeURIComponent(description)}&amount=${numericAmount}`);
       } else if (paymentMethod === "payos" && orderCode) {
         response = await fetch(`/api/webhooks?orderCode=${orderCode}`);
@@ -141,7 +141,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice }: DepositModalP
     const newUuid = generateUUID();
     setUuid(newUuid);
     
-    const content = `dat coc ${newUuid}`;
+    const content = `nap tien ${newUuid}`;
 
     if (paymentMethod === "vietqr") {
       // VietQR logic - you'll need to implement this

@@ -225,7 +225,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
             body: JSON.stringify({
               orderCode: newOrderCode,
               amount: numericAmount,
-              description: `dat coc ${newUuid}`.substring(0, 25),
+              description: `nap tien ${newUuid}`.substring(0, 25),
               cancelUrl: window.location.origin + "/thanh-toan-that-bai",
               returnUrl: window.location.origin + "/thanh-toan-thanh-cong"
             })
@@ -252,7 +252,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
 
     setUuid(newUuid);
     
-    const content = `dat coc ${newUuid}`;
+    const content = `nap tien ${newUuid}`;
     const newOrderCode = Math.floor(Math.random() * 1000000);
     setOrderCode(newOrderCode.toString());
     console.log('Set orderCode to:', newOrderCode, 'UUID:', newUuid);

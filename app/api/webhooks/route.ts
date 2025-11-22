@@ -52,14 +52,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const page: string | null = searchParams.get('page');
     const limitParam: string | null = searchParams.get('limit');
 
-    console.log('🔍 Webhook GET request - Params:', {
-      description,
-      amount,
-      orderCode,
-      page,
-      limitParam
-    });
-
     let query: any = {};
     let limit: number = 10;
     let skip: number = 0;
@@ -74,7 +66,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
     // If orderCode provided, search for PayOS transaction
     else if (orderCode) {
-      console.log('🔍 Searching for orderCode:', orderCode);
       query = {
         'data.orderCode': parseInt(orderCode)
       };
@@ -94,15 +85,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .limit(limit)
       .lean();
 
-    console.log('📊 Query:', query);
-    console.log('📊 Found webhooks:', webhooks.length);
-
     // If searching for specific transaction, return simplified response
     if ((description && amount) || orderCode) {
       if (webhooks.length > 0) {
         const status = "done";
-        console.log('✅ Webhook found for orderCode:', orderCode);
-        console.log('📋 Webhook data:', webhooks[0]);
         
         return NextResponse.json({
           success: true,
@@ -110,7 +96,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           webhooks: webhooks
         });
       } else {
-        console.log('❌ No webhook found for orderCode:', orderCode);
         return NextResponse.json({
           success: true,
           data: "none"
@@ -150,7 +135,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     if (existingWebhook) {
-      console.log('⚠️ Webhook already exists for reference:', webhookData.data.reference);
       return NextResponse.json({
         success: true,
         message: "Webhook already exists",
@@ -168,14 +152,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     const savedWebhook = await webhook.save();
-    console.log('✅ Webhook saved:', savedWebhook._id);
 
     // Check if payment was successful (code "00" or success true)
     const isPaymentSuccessful = (webhookData.code === '00' || webhookData.code === '0') && 
                                (webhookData.success !== false);
 
     if (isPaymentSuccessful && webhookData.data.orderCode) {
-      console.log('💰 Payment successful, processing user balance update...');
       
       try {
         const orderCode = parseInt(webhookData.data.orderCode.toString());
@@ -186,7 +168,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           invoice.status = 'completed';
           invoice.paymentDate = new Date();
           await invoice.save();
-          console.log('✅ Updated invoice status to completed');
           
           // 2. Update user balance and totalSpent
           const user = await User.findById(invoice.userId);
@@ -194,9 +175,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             user.balance += invoice.totalAmount; // Add total amount (amount + bonus)
             user.totalSpent += invoice.amount; // Add only the payment amount to totalSpent
             await user.save();
-            console.log(`✅ Updated user balance: +${invoice.totalAmount}, totalSpent: +${invoice.amount}`);
           } else {
-            console.warn('⚠️ User not found for invoice:', invoice.userId);
           }
           
           // 3. Update webhook status to completed
@@ -204,16 +183,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             status: 'completed',
             updatedAt: new Date()
           });
-          console.log('✅ Updated webhook status to completed');
         } else {
-          console.warn('⚠️ Invoice not found or already completed for orderCode:', orderCode);
         }
       } catch (updateError) {
-        console.error('❌ Error updating invoice/user:', updateError);
-        // Continue with response even if update fails
       }
     } else {
-      console.log('⏳ Payment not successful or no orderCode, webhook saved as pending');
     }
 
     return NextResponse.json({
@@ -228,73 +202,3 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }, { status: 500 });
   }
 }
-// export async function POST(req: NextRequest): Promise<NextResponse> {
-//   try {
-//     await connectDB();
-
-//     const webhookData: WebhookRequestData = await req.json();
-
-//     // Check if webhook already exists (prevent duplicates)
-//     // const existingWebhook = await Webhook.findOne({
-//     //   'data.reference': webhookData.data.reference,
-//     //   'data.amount': webhookData.data.amount
-//     // });
-
-//     // if (existingWebhook) {
-//     //   return NextResponse.json({
-//     //     success: true,
-//     //     message: "Webhook already exists",
-//     //     data: existingWebhook
-//     //   });
-//     // }
-
-//     // Create webhook document with TTL and status
-//     const webhook = new Webhook({
-//       code: webhookData.code || '00',
-//       desc: webhookData.desc || 'success',
-//       success: webhookData.success !== undefined ? webhookData.success : true,
-//       data: webhookData.data,
-//       status: 'completed', // Payment received and completed
-//       // expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // Auto-delete after 24 hours
-//     });
-
-//     const savedWebhook = await webhook.save();
-
-//     // Update cache with payment status using UUID from description
-//     // const uuid = webhookData.data.description;
-//     // paymentCache.set(uuid, "done", webhookData.data.amount);
-
-//     // Also update cache with orderCode if available
-//     // if (webhookData.data.orderCode) {
-//     //   paymentCache.set(
-//     //     webhookData.data.orderCode.toString(),
-//     //     "done",
-//     //     webhookData.data.amount
-//     //   );
-//     // }
-
-//     // Try to update associated invoice if exists
-//     // try {
-//     //   const invoice = await Invoice.findOne({ uuid });
-//     //   if (invoice) {
-//     //     invoice.status = 'completed';
-//     //     invoice.paymentDate = new Date();
-//     //     await invoice.save();
-//     //     console.log(`Invoice ${uuid} marked as completed`);
-//     //   }
-//     // } catch (error) {
-//     //   console.error('Error updating invoice:', error);
-//     // }
-
-//     return NextResponse.json({
-//       success: true,
-//       message: "Webhook received successfully",
-//       data: savedWebhook
-//     });
-//   } catch (error) {
-//     return NextResponse.json({
-//       success: false,
-//       error: (error as Error).message
-//     }, { status: 500 });
-//   }
-// }

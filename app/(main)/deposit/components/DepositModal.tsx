@@ -135,7 +135,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
 
   // Helper function to create PayOS link
   const createPayOSLink = async (orderCodeNum: number) => {
-    const content = `dat coc ${orderCodeNum}`;
+    const content = `nap tien ${orderCodeNum}`;
     let safeContent = content;
     if (safeContent.length > 25) safeContent = safeContent.slice(0, 25);
     

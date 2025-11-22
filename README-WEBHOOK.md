@@ -17,7 +17,7 @@ Nhận webhook từ PayOS khi có giao dịch thanh toán.
   "data": {
     "accountNumber": "0888290899999",
     "amount": 2000,
-    "description": "dat coc c70f9975f8764f8db",
+    "description": "nap tien c70f9975f8764f8db",
     "reference": "FT25321824039739",
     "transactionDateTime": "2025-11-16 16:56:40",
     "virtualAccountNumber": "",
@@ -59,7 +59,7 @@ Lấy danh sách webhooks hoặc kiểm tra giao dịch cụ thể.
 
 1. **Check giao dịch VietQR:**
 ```
-GET /api/webhooks?description=dat coc c70f9975f8764f8db&amount=2000
+GET /api/webhooks?description=nap tien c70f9975f8764f8db&amount=2000
 ```
 
 2. **Check giao dịch PayOS:**
@@ -105,7 +105,7 @@ PayOS sẽ gửi POST request đến `/api/webhooks` khi có giao dịch.
 #### VietQR:
 ```javascript
 const checkVietQRPayment = async (uuid, amount) => {
-  const description = `dat coc ${uuid}`;
+  const description = `nap tien ${uuid}`;
   const response = await fetch(`/api/webhooks?description=${encodeURIComponent(description)}&amount=${amount}`);
   const result = await response.json();
 

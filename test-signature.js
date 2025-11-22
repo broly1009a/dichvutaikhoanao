@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const testData = {
   orderCode: 860284,
   amount: 10000,
-  description: "dat coc 25b7d2951dec429b9",
+  description: "nap tien 25b7d2951dec429b9",
   returnUrl: "http://localhost:3000/thanh-toan-thanh-cong",
   cancelUrl: "http://localhost:3000/thanh-toan-that-bai"
 };

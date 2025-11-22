@@ -53,7 +53,7 @@ return (
 {
   "orderCode": 123456,
   "amount": 100000,
-  "description": "dat coc abc123",
+  "description": "nap tien abc123",
   "cancelUrl": "...",
   "returnUrl": "..."
 }
