@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bell, Settings, LogOut, User, Moon, Sun } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/lib/context/AuthContext";
 interface AdminNavbarProps {
   title: string;
@@ -12,6 +13,7 @@ export function AdminNavbar({ title }: AdminNavbarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { logout } = useAuthContext();
+  const router = useRouter();
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
     if (theme === "dark") {
@@ -104,13 +106,28 @@ export function AdminNavbar({ title }: AdminNavbarProps) {
                   <p className="text-sm text-gray-600 dark:text-gray-400">admin@hh-shopee.com</p>
                 </div>
                 <div className="p-2">
-                  <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                  <button
+                    onClick={() => {
+                      router.push('/admin/profile');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
                     <User size={16} />
                     <span className="text-sm">Hồ sơ</span>
                   </button>
                   <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     <Settings size={16} />
                     <span className="text-sm">Cài đặt</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push('/admin/change-password');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <span className="text-sm">🔑 Đổi mật khẩu</span>
                   </button>
                   <hr className="my-2 border-gray-200 dark:border-slate-700" />
                   <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">

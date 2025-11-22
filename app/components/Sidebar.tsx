@@ -19,7 +19,7 @@ import {
   PhoneIcon,
   SparklesIcon,
   ShieldCheckIcon,
-  // UserCircleIcon,
+  UserCircleIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "@/lib/context/AuthContext";
@@ -38,6 +38,7 @@ const menuItems: MenuItem[] = [
   { icon: ArrowTrendingUpIcon, label: "Up follow Shopee, Lazada", href: "/follow" },
   { icon: ClipboardDocumentListIcon, label: "Đặt đơn Shopee", href: "/order" },
   { icon: ClockIcon, label: "Lịch sử mua hàng", href: "/history" },
+  { icon: UserCircleIcon, label: "Hồ sơ cá nhân", href: "/profile" },
   
   { icon: null, label: "Nạp tiền", isHeader: true, href: "" },
   { icon: BanknotesIcon, label: "Ngân hàng", href: "/deposit/bank" },

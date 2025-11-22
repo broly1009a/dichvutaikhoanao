@@ -125,6 +125,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                         👤 Hồ sơ
                       </Link>
                       <Link
+                        href="/change-password"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                      >
+                        🔑 Đổi mật khẩu
+                      </Link>
+                      <Link
                         href="/invoices"
                         onClick={() => setShowUserMenu(false)}
                         className="block px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition"

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
+import Order from '@/lib/models/Order';
 import { verifyToken, getTokenFromCookies } from '@/lib/jwt';
 
-// GET /api/user/profile - Lấy thông tin profile
+// GET /api/admin/profile - Lấy thông tin profile admin
 export async function GET(request: NextRequest) {
   try {
     const conn = await connectDB();
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Lấy user từ database
+    // Lấy user từ database và kiểm tra role admin
     const user = await User.findById(payload.userId).select('-password');
     if (!user) {
       return NextResponse.json(
@@ -48,76 +49,91 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Tính toán thống kê tài chính từ orders collection
-    const stats = await User.aggregate([
-      { $match: { _id: user._id } },
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'orders'
-        }
-      },
-      {
-        $project: {
-          totalPurchased: {
-            $size: {
-              $filter: {
-                input: '$orders',
-                as: 'order',
-                cond: { $eq: ['$$order.status', 'completed'] }
-              }
-            }
-          },
-          totalSpent: {
-            $sum: {
-              $map: {
-                input: {
-                  $filter: {
-                    input: '$orders',
-                    as: 'order',
-                    cond: { $eq: ['$$order.status', 'completed'] }
-                  }
-                },
-                as: 'order',
-                in: '$$order.totalPrice'
-              }
-            }
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Access denied. Admin role required.' },
+        { status: 403 }
+      );
+    }
+
+    // Thống kê tổng quan cho admin
+    const [
+      totalUsers,
+      totalOrders,
+      pendingOrders,
+      todayRevenue,
+      totalRevenue
+    ] = await Promise.all([
+      User.countDocuments({ role: { $ne: 'admin' } }),
+      Order.countDocuments(),
+      Order.countDocuments({ status: 'pending' }),
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: new Date(new Date().setHours(0, 0, 0, 0))
+            },
+            status: { $in: ['completed', 'paid'] }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$totalAmount' }
           }
         }
-      }
+      ]),
+      Order.aggregate([
+        {
+          $match: {
+            status: { $in: ['completed', 'paid'] }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$totalAmount' }
+          }
+        }
+      ])
     ]);
 
-    const userStats = stats[0] || { totalPurchased: 0, totalSpent: 0 };
+    const todayRevenueAmount = todayRevenue[0]?.total || 0;
+    const totalRevenueAmount = totalRevenue[0]?.total || 0;
 
     return NextResponse.json({
       success: true,
       data: {
         _id: user._id,
+        username: user.username,
         email: user.email,
         phone: user.phone,
         fullName: user.fullName,
         role: user.role,
         status: user.status,
-        balance: user.balance,
-        totalPurchased: userStats.totalPurchased,
-        totalSpent: userStats.totalSpent,
+        permissions: user.permissions || ['users.manage', 'orders.manage', 'products.manage', 'settings.manage'],
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
         lastLogin: user.lastLogin,
+        stats: {
+          totalUsers,
+          totalOrders,
+          totalRevenue: totalRevenueAmount,
+          pendingOrders,
+          todayRevenue: todayRevenueAmount,
+          activeUsers: Math.floor(totalUsers * 0.7), // Mock active users (70% of total)
+        }
       },
     });
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error('Get admin profile error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to get profile' },
+      { success: false, error: 'Failed to get admin profile' },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/user/profile - Cập nhật profile
+// PUT /api/admin/profile - Cập nhật profile admin
 export async function PUT(request: NextRequest) {
   try {
     const conn = await connectDB();
@@ -182,12 +198,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Lấy user từ database
+    // Lấy user từ database và kiểm tra role admin
     const user = await User.findById(payload.userId);
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Access denied. Admin role required.' },
+        { status: 403 }
       );
     }
 
@@ -199,24 +222,24 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Profile updated successfully',
+      message: 'Admin profile updated successfully',
       data: {
         _id: user._id,
+        username: user.username,
         email: user.email,
         phone: user.phone,
         fullName: user.fullName,
         role: user.role,
         status: user.status,
-        balance: user.balance,
+        permissions: user.permissions || ['users.manage', 'orders.manage', 'products.manage', 'settings.manage'],
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
         lastLogin: user.lastLogin,
       },
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('Update admin profile error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to update profile' },
+      { success: false, error: 'Failed to update admin profile' },
       { status: 500 }
     );
   }
