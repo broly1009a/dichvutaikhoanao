@@ -2,14 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Webhook from '@/lib/models/Webhook';
-// import Invoice from '@/lib/models/Invoice';
-// import { paymentCache } from '@/lib/payment-cache';
-// import {
-//   verifyPayOSSignature,
-//   requestDeduplicator,
-//   retryWithBackoff,
-//   isRetryableError
-// } from '@/lib/utils/payment-utils';
+import Invoice from '@/lib/models/Invoice';
+import User from '@/lib/models/User';
 
 interface WebhookRequestData {
   code?: string;
@@ -149,6 +143,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const webhookData: WebhookRequestData = await req.json();
 
+    // Check if webhook already exists (prevent duplicates)
+    const existingWebhook = await Webhook.findOne({
+      'data.reference': webhookData.data.reference,
+      'data.amount': webhookData.data.amount
+    });
+
+    if (existingWebhook) {
+      console.log('⚠️ Webhook already exists for reference:', webhookData.data.reference);
+      return NextResponse.json({
+        success: true,
+        message: "Webhook already exists",
+        data: existingWebhook
+      });
+    }
+
     // Create webhook document with signature at root level
     const webhook = new Webhook({
       code: webhookData.code || '00',
@@ -159,6 +168,53 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     const savedWebhook = await webhook.save();
+    console.log('✅ Webhook saved:', savedWebhook._id);
+
+    // Check if payment was successful (code "00" or success true)
+    const isPaymentSuccessful = (webhookData.code === '00' || webhookData.code === '0') && 
+                               (webhookData.success !== false);
+
+    if (isPaymentSuccessful && webhookData.data.orderCode) {
+      console.log('💰 Payment successful, processing user balance update...');
+      
+      try {
+        const orderCode = parseInt(webhookData.data.orderCode.toString());
+        
+        // 1. Find and update invoice
+        const invoice = await Invoice.findOne({ orderCode });
+        if (invoice && invoice.status === 'pending') {
+          invoice.status = 'completed';
+          invoice.paymentDate = new Date();
+          await invoice.save();
+          console.log('✅ Updated invoice status to completed');
+          
+          // 2. Update user balance and totalSpent
+          const user = await User.findById(invoice.userId);
+          if (user) {
+            user.balance += invoice.totalAmount; // Add total amount (amount + bonus)
+            user.totalSpent += invoice.amount; // Add only the payment amount to totalSpent
+            await user.save();
+            console.log(`✅ Updated user balance: +${invoice.totalAmount}, totalSpent: +${invoice.amount}`);
+          } else {
+            console.warn('⚠️ User not found for invoice:', invoice.userId);
+          }
+          
+          // 3. Update webhook status to completed
+          await Webhook.findByIdAndUpdate(savedWebhook._id, { 
+            status: 'completed',
+            updatedAt: new Date()
+          });
+          console.log('✅ Updated webhook status to completed');
+        } else {
+          console.warn('⚠️ Invoice not found or already completed for orderCode:', orderCode);
+        }
+      } catch (updateError) {
+        console.error('❌ Error updating invoice/user:', updateError);
+        // Continue with response even if update fails
+      }
+    } else {
+      console.log('⏳ Payment not successful or no orderCode, webhook saved as pending');
+    }
 
     return NextResponse.json({
       success: true,
