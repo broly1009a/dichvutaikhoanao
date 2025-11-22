@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
-// adminMiddleware
-import { adminMiddleware } from '@/lib/middleware/auth';
-// GET /api/user - Lấy danh sách người dùng
+// GET /api/user - Lấy danh sách người dùng (admin only)
 export async function GET(request: NextRequest) {
-  // Check admin middleware
-//   const isAdmin = await adminMiddleware(request);
-//   if (!isAdmin) {
-//     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
-//   }
   try {
+    // Check if user is admin
+    const userRole = request.headers.get('x-user-role');
+    if (userRole !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
     await connectDB();
     const users = await User.find({}, {
       _id: 1,
@@ -35,14 +34,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/user - Tạo mới người dùng
+// POST /api/user - Tạo mới người dùng (admin only)
 export async function POST(request: NextRequest) {
-  // Check admin middleware
-  const isAdmin = await adminMiddleware(request);
-  if (!isAdmin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
-  }
   try {
+    // Check if user is admin
+    const userRole = request.headers.get('x-user-role');
+    if (userRole !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
     await connectDB();
     const body = await request.json();
     const user = new User(body);

@@ -25,8 +25,7 @@ const CategorySchema: Schema = new Schema(
       type: String, 
       required: true, 
       unique: true,
-      lowercase: true,
-      index: true 
+      lowercase: true
     },
     description: { type: String },
     platform: { 

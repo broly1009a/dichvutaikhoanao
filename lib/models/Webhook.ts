@@ -33,11 +33,11 @@ export interface IWebhook extends Document {
 }
 
 const WebhookDataSchema = new Schema<IWebhookData>({
-  accountNumber: { type: String, required: true },
-  amount: { type: Number, required: true },
-  description: { type: String, required: true },
-  reference: { type: String, required: true },
-  transactionDateTime: { type: String, required: true },
+  accountNumber: { type: String },
+  amount: { type: Number },
+  description: { type: String },
+  reference: { type: String },
+  transactionDateTime: { type: String },
   virtualAccountNumber: { type: String, default: '' },
   counterAccountBankId: { type: String, default: '' },
   counterAccountBankName: { type: String, default: '' },
@@ -50,13 +50,13 @@ const WebhookDataSchema = new Schema<IWebhookData>({
   code: { type: String, default: '00' },
   desc: { type: String, default: 'success' },
   signature: { type: String }
-});
+}, { strict: false });
 
 const WebhookSchema = new Schema<IWebhook>({
-  code: { type: String, required: true, default: '00' },
-  desc: { type: String, required: true, default: 'success' },
-  success: { type: Boolean, required: true, default: true },
-  data: { type: WebhookDataSchema, required: true },
+  code: { type: String, default: '00' },
+  desc: { type: String, default: 'success' },
+  success: { type: Boolean, default: true },
+  data: { type: WebhookDataSchema },
   status: { 
     type: String, 
     enum: ['pending', 'completed', 'expired'],

@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import SupportTicket from '@/lib/models/SupportTicket';
 import User from '@/lib/models/User';
-import { getTokenFromCookies } from '@/lib/auth';
-import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 
 /**
@@ -17,22 +15,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     await connectDB();
 
-    // Get user from token
-    const token = getTokenFromCookies(request);
-    if (!token) {
+    // Get user from middleware headers
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
         { status: 401 }
       );
     }
@@ -114,22 +101,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     await connectDB();
 
-    // Get user from token
-    const token = getTokenFromCookies(request);
-    if (!token) {
+    // Get user from middleware headers
+    const userId = request.headers.get('x-user-id');
+    if (!userId) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    let userId: string;
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-      userId = decoded.userId;
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
         { status: 401 }
       );
     }

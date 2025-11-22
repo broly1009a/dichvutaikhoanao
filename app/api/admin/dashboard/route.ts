@@ -2,29 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
 import Order from '@/lib/models/Order';
-import Product from '@/lib/models/Product';
+// import Product from '@/lib/models/Product';
 import Invoice from '@/lib/models/Invoice';
 import Webhook from '@/lib/models/Webhook';
-import { getTokenFromCookies } from '@/lib/auth';
-import jwt from 'jsonwebtoken';
 
 // GET /api/admin/dashboard - Lấy thống kê dashboard
 export async function GET(request: NextRequest) {
   try {
-    // Verify admin token
-    const token = getTokenFromCookies(request);
-    if (!token) {
+    // Get user ID from middleware headers
+    const userId = request.headers.get('x-user-id');
+    const userRole = request.headers.get('x-user-role');
+    console.log('Admin Dashboard accessed by user:', userId, 'with role:', userRole);
+    if (!userId || userRole !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    try {
-      jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
         { status: 401 }
       );
     }

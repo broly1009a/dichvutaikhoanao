@@ -71,7 +71,6 @@ const PostSchema: Schema = new Schema(
 // Indexes
 PostSchema.index({ isPublished: 1, publishedAt: -1 });
 PostSchema.index({ category: 1, isPublished: 1, publishedAt: -1 });
-PostSchema.index({ slug: 1 });
 PostSchema.index({ tags: 1 });
 
 // Pre-save middleware to set publishedAt

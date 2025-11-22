@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import SupportTicket from '@/lib/models/SupportTicket';
-import { getTokenFromCookies } from '@/lib/auth';
-import jwt from 'jsonwebtoken';
 
 /**
  * GET /api/admin/support - Lấy danh sách tất cả support tickets (admin only)
@@ -15,26 +13,13 @@ import jwt from 'jsonwebtoken';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Verify admin token
-    const token = getTokenFromCookies(request);
-    if (!token) {
+    // Get user from middleware headers (admin role already verified)
+    const userId = request.headers.get('x-user-id');
+    const userRole = request.headers.get('x-user-role');
+
+    if (!userId || userRole !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-      if (decoded.role !== 'admin') {
-        return NextResponse.json(
-          { success: false, error: 'Admin access required' },
-          { status: 403 }
-        );
-      }
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
         { status: 401 }
       );
     }
@@ -144,26 +129,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  */
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   try {
-    // Verify admin token
-    const token = getTokenFromCookies(request);
-    if (!token) {
+    // Get user from middleware headers (admin role already verified)
+    const userId = request.headers.get('x-user-id');
+    const userRole = request.headers.get('x-user-role');
+
+    if (!userId || userRole !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-      if (decoded.role !== 'admin') {
-        return NextResponse.json(
-          { success: false, error: 'Admin access required' },
-          { status: 403 }
-        );
-      }
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
         { status: 401 }
       );
     }
