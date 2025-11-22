@@ -43,31 +43,38 @@ export async function GET(request: NextRequest) {
     // Get total count
     const total = await Invoice.countDocuments(query);
 
-    // Get invoices with user info
+    // Get invoices
     const invoices = await Invoice.find(query)
-      .populate('userId', 'email username')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
+    // Get user info for these invoices
+    const userIds = invoices.map(inv => inv.userId).filter(id => id);
+    const users = await User.find({ _id: { $in: userIds } }).select('email fullName username');
+    const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
     // Format data for frontend
-    const transactions = invoices.map((invoice: any) => ({
-      id: invoice._id,
-      transactionId: invoice._id.toString().slice(-12).toUpperCase(),
-      userName: invoice.userId?.username || invoice.userId?.email || 'Unknown',
-      userEmail: invoice.userId?.email || 'Unknown',
-      type: 'deposit', // All invoices are deposits
-      amount: invoice.amount,
-      bonus: invoice.bonus || 0,
-      totalAmount: (invoice.amount || 0) + (invoice.bonus || 0),
-      status: invoice.status, // pending, completed, failed
-      time: new Date(invoice.createdAt).toLocaleString('vi-VN'),
-      date: invoice.createdAt,
-      description: invoice.description || '',
-      orderCode: invoice.orderCode,
-      uuid: invoice.uuid,
-    }));
+    const transactions = invoices.map((invoice: any) => {
+      const user = userMap.get(invoice.userId);
+      return {
+        id: invoice._id,
+        transactionId: invoice._id.toString().slice(-12).toUpperCase(),
+        userName: user?.fullName || user?.username || user?.email || 'Unknown',
+        userEmail: user?.email || 'Unknown',
+        type: 'deposit', // All invoices are deposits
+        amount: invoice.amount,
+        bonus: invoice.bonus || 0,
+        totalAmount: (invoice.amount || 0) + (invoice.bonus || 0),
+        status: invoice.status, // pending, completed, failed
+        time: new Date(invoice.createdAt).toLocaleString('vi-VN'),
+        date: invoice.createdAt,
+        description: invoice.description || '',
+        orderCode: invoice.orderCode,
+        uuid: invoice.uuid,
+      };
+    });
 
     // Calculate stats
     const [depositStats, completedStats] = await Promise.all([
@@ -168,7 +175,7 @@ export async function PATCH(request: NextRequest) {
         paymentDate: status === 'completed' ? new Date() : null,
       },
       { new: true }
-    ).populate('userId', 'email username');
+    );
 
     if (!invoice) {
       return NextResponse.json(
@@ -176,6 +183,9 @@ export async function PATCH(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Get user info
+    const user = await User.findById(invoice.userId).select('email username');
 
     // Update user balance if completed
     if (status === 'completed') {
@@ -189,7 +199,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Invoice status updated successfully',
-      data: invoice,
+      data: {
+        ...invoice.toObject(),
+        userId: user, // Replace userId string with user object
+      },
     });
   } catch (error) {
     console.error('Update payment error:', error);
