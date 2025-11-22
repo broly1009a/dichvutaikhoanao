@@ -40,7 +40,7 @@ export function ProvidersPage() {
   const fetchProviders = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/providers");
+      const res = await fetch("/api/admin/providers");
       const data = await res.json();
       if (data.success) {
         setProviders(data.data);
@@ -57,8 +57,8 @@ export function ProvidersPage() {
 
     try {
       const url = editingProvider
-        ? `/api/providers/${editingProvider._id}`
-        : "/api/providers";
+        ? `/api/admin/providers/${editingProvider._id}`
+        : "/api/admin/providers";
       const method = editingProvider ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -95,7 +95,7 @@ export function ProvidersPage() {
     if (!confirm("Bạn chắc chắn muốn xóa provider này?")) return;
 
     try {
-      const res = await fetch(`/api/providers/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/providers/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         await fetchProviders();
@@ -114,7 +114,7 @@ export function ProvidersPage() {
     if (!endpoint) return;
 
     try {
-      const res = await fetch("/api/providers/sync", {
+      const res = await fetch("/api/admin/providers/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -7,7 +7,7 @@ import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
 interface UsersPageProps {
-  onOpenUserModal: (user?: User) => void;
+  onOpenUserModal: (user?: User, onSuccess?: () => void) => void;
 }
 
 export function UsersPage({ onOpenUserModal }: UsersPageProps) {
@@ -16,7 +16,7 @@ export function UsersPage({ onOpenUserModal }: UsersPageProps) {
   // Fetch users from API
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/user");
+      const res = await fetch("/api/admin/user");
       const data = await res.json();
       if (data.success) {
         setUserList(
@@ -50,7 +50,7 @@ export function UsersPage({ onOpenUserModal }: UsersPageProps) {
   const handleDelete = async (userId: string) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return;
     try {
-      const res = await fetch(`/api/user/${userId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/user/${userId}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("Đã xóa người dùng thành công");
@@ -89,7 +89,7 @@ export function UsersPage({ onOpenUserModal }: UsersPageProps) {
           </p>
         </div>
         <button
-          onClick={() => onOpenUserModal()}
+          onClick={() => onOpenUserModal(undefined, fetchUsers)}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all"
         >
           <PlusIcon className="w-5 h-5" />
@@ -162,7 +162,7 @@ export function UsersPage({ onOpenUserModal }: UsersPageProps) {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => onOpenUserModal(user)}
+                        onClick={() => onOpenUserModal(user, fetchUsers)}
                         className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         title="Chỉnh sửa"
                       >

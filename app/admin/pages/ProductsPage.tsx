@@ -63,7 +63,7 @@ export function ProductsPage() {
       if (filterStatus) params.append("status", filterStatus);
       if (searchTerm) params.append("search", searchTerm);
 
-      const url = `/api/products?${params.toString()}`;
+      const url = `/api/admin/products?${params.toString()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -78,7 +78,7 @@ export function ProductsPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/admin/categories");
       const data = await res.json();
       if (data.success) {
         setCategories(data.data || []);
@@ -98,7 +98,7 @@ export function ProductsPage() {
     }
 
     try {
-      const url = editingProduct ? `/api/products/${editingProduct._id}` : "/api/products";
+      const url = editingProduct ? `/api/admin/products/${editingProduct._id}` : "/api/admin/products";
       const method = editingProduct ? "PUT" : "POST";
 
       // Khi tạo mới, không cần id
@@ -138,7 +138,7 @@ export function ProductsPage() {
     if (!confirm("Bạn chắc chắn muốn xóa sản phẩm này?")) return;
 
     try {
-      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         await fetchProducts();

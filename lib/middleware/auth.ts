@@ -3,8 +3,8 @@ import { verifyToken } from '../jwt';
 import User from '../models/User';
 import { connectDB } from '../db';
 
-// Middleware để verify JWT token
-export async function authMiddleware(request: NextRequest) {
+// Function to get authenticated user from request
+async function getAuthenticatedUser(request: NextRequest): Promise<{ user: any | null, error: NextResponse | null }> {
   try {
     // Connect to DB
     await connectDB();
@@ -29,89 +29,93 @@ export async function authMiddleware(request: NextRequest) {
     }
 
     if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - No token provided',
-        },
-        { status: 401 }
-      );
+      return {
+        user: null,
+        error: NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized - No token provided',
+          },
+          { status: 401 }
+        )
+      };
     }
 
     // Verify JWT token
     const decoded = verifyToken(token);
     if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - Invalid token',
-        },
-        { status: 401 }
-      );
+      return {
+        user: null,
+        error: NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized - Invalid token',
+          },
+          { status: 401 }
+        )
+      };
     }
 
     // Fetch user from DB
     const user = await User.findById(decoded.userId);
     if (!user || user.status !== 'active') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - User not found or inactive',
-        },
-        { status: 401 }
-      );
+      return {
+        user: null,
+        error: NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized - User not found or inactive',
+          },
+          { status: 401 }
+        )
+      };
     }
 
-    // TODO: Check if token is blacklisted (implement later)
-
-    // Create new request with user info in headers
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-id', user._id.toString());
-    requestHeaders.set('x-user-role', user.role);
-    requestHeaders.set('x-user-email', user.email);
-
-    // Return NextResponse.next() with modified headers
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    return { user, error: null };
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Unauthorized - Invalid token',
-      },
-      { status: 401 }
-    );
+    console.error('Auth error:', error);
+    return {
+      user: null,
+      error: NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized - Invalid token',
+        },
+        { status: 401 }
+      )
+    };
   }
+}
+
+// Middleware để verify JWT token
+export async function authMiddleware(request: NextRequest) {
+  const { user, error } = await getAuthenticatedUser(request);
+  if (error) {
+    return error;
+  }
+
+  // Create new request with user info in headers
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-user-id', user._id.toString());
+  requestHeaders.set('x-user-role', user.role);
+  requestHeaders.set('x-user-email', user.email);
+
+  // Return NextResponse.next() with modified headers
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 // Middleware để check admin role
 export async function adminMiddleware(request: NextRequest) {
-  try {
-    // First apply auth middleware
-    const authResult = await authMiddleware(request);
-    if (authResult && authResult.status !== 200) {
-      return authResult;
-    }
+  const { user, error } = await getAuthenticatedUser(request);
+  if (error) {
+    return error;
+  }
 
-    // Get user role from headers (set by authMiddleware)
-    const userRole = request.headers.get('x-user-role');
-    if (userRole !== 'admin') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Forbidden - Admin access required',
-        },
-        { status: 403 }
-      );
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Admin middleware error:', error);
+  if (user.role !== 'admin') {
     return NextResponse.json(
       {
         success: false,
@@ -120,4 +124,16 @@ export async function adminMiddleware(request: NextRequest) {
       { status: 403 }
     );
   }
+
+  // Create new request with user info in headers
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-user-id', user._id.toString());
+  requestHeaders.set('x-user-role', user.role);
+  requestHeaders.set('x-user-email', user.email);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }

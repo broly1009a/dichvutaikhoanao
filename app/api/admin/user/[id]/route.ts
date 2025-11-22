@@ -5,11 +5,6 @@ import { adminMiddleware } from '@/lib/middleware/auth';
 
 // PUT /api/user/[id] - Cập nhật thông tin người dùng
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  // Check admin middleware
-//   const isAdmin = await adminMiddleware(request);
-//   if (!isAdmin) {
-//     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
-//   }
   try {
     await connectDB();
     const body = await request.json();
@@ -26,11 +21,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
 // DELETE /api/user/[id] - Xóa người dùng
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  // Check admin middleware
-  const isAdmin = await adminMiddleware(request);
-  if (!isAdmin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
-  }
   try {
     await connectDB();
     const { id } = await context.params;

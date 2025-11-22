@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import SupportTicket from '@/lib/models/SupportTicket';
-import User from '@/lib/models/User';
+// import User from '@/lib/models/User';
 import mongoose from 'mongoose';
 
 /**

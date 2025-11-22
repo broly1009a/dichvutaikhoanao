@@ -209,3 +209,92 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 }
 
+/**
+ * PATCH /api/card
+ * Update card deposit status (admin only)
+ *
+ * Body:
+ * {
+ *   id: string,
+ *   status: 'pending'|'completed'|'failed'|'processing',
+ *   reason?: string
+ * }
+ */
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  try {
+    await connectDB();
+
+    // Verify admin token
+    const token = getTokenFromCookies(req);
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    try {
+      jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+    const { id, status, reason } = body;
+
+    if (!id || !status) {
+      return NextResponse.json(
+        { error: 'id and status are required' },
+        { status: 400 }
+      );
+    }
+
+    const validStatuses = ['pending', 'completed', 'failed', 'processing'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: 'Invalid status' },
+        { status: 400 }
+      );
+    }
+
+    // Update card deposit
+    const updated = await CardDeposit.findByIdAndUpdate(
+      id,
+      {
+        status,
+        processedAt: status === 'completed' || status === 'failed' ? new Date() : undefined,
+        reason: reason || undefined
+      },
+      { new: true }
+    ).populate('userId', 'email username balance');
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: 'Card deposit not found' },
+        { status: 404 }
+      );
+    }
+
+    // If completed, add balance to user
+    if (status === 'completed' && updated.userId) {
+      await User.findByIdAndUpdate(updated.userId, {
+        $inc: { balance: updated.actualAmount }
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Card deposit updated successfully',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Update card deposit error:', error);
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
+  }
+}

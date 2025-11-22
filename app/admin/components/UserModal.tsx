@@ -9,9 +9,10 @@ interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: User;
+  onSuccess?: () => void;
 }
 
-export function UserModal({ isOpen, onClose, user }: UserModalProps) {
+export function UserModal({ isOpen, onClose, user, onSuccess }: UserModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,14 +44,49 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
     }
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user) {
-      toast.success("Đã cập nhật người dùng thành công");
-    } else {
-      toast.success("Đã thêm người dùng mới thành công");
+    try {
+      const payload = {
+        fullName: formData.name,
+        email: formData.email,
+        role: formData.role,
+        status: formData.status === "active" ? "active" : "blocked",
+        ...(formData.password && { password: formData.password }), // Only include password if provided
+      };
+
+      let res;
+      if (user) {
+        // Update existing user
+        res = await fetch(`/api/admin/user/${user.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Create new user
+        res = await fetch("/api/admin/user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(user ? "Đã cập nhật người dùng thành công" : "Đã thêm người dùng mới thành công");
+        onClose();
+        onSuccess?.(); // Refresh the list
+      } else {
+        toast.error(data.error || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi gửi yêu cầu");
     }
-    onClose();
   };
 
   if (!isOpen) return null;

@@ -20,6 +20,7 @@ import { Toaster } from "../components/ui/sonner";
 import { OrdersPage } from "./pages/OrdersPage";
 import { FAQPage } from "./pages/FAQPage";
 import { PostsPage } from "./pages/PostsPage";
+import { SupportPage } from "./pages/SupportPage";
 
 export default function AdminPage() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -65,6 +66,7 @@ export default function AdminPage() {
       orders: "Quản lý đơn hàng",
       faq: "Quản lý FAQ",
       posts: "Quản lý bài viết",
+      support: "Quản lý Support",
     };
     return titles[activePage] || "Dashboard";
   };
@@ -97,6 +99,8 @@ export default function AdminPage() {
         return <FAQPage />;
       case "posts":
         return <PostsPage />;
+      case "support":
+        return <SupportPage />;
       default:
         return (
           <div className="flex items-center justify-center h-full">

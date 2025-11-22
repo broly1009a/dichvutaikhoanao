@@ -68,8 +68,8 @@ export function CategoriesPage() {
     try {
       setLoading(true);
       const url = selectedPlatform
-        ? `/api/categories?platform=${selectedPlatform}`
-        : "/api/categories";
+        ? `/api/admin/categories?platform=${selectedPlatform}`
+        : "/api/admin/categories";
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -87,8 +87,8 @@ export function CategoriesPage() {
 
     try {
       const url = editingCategory
-        ? `/api/categories/${editingCategory._id}`
-        : "/api/categories";
+        ? `/api/admin/categories/${editingCategory._id}`
+        : "/api/admin/categories";
       const method = editingCategory ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -123,7 +123,7 @@ export function CategoriesPage() {
     if (!confirm("Bạn chắc chắn muốn xóa category này?")) return;
 
     try {
-      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         await fetchCategories();

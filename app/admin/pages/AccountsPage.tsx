@@ -61,7 +61,7 @@ export function AccountsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/admin/products");
       const data = await res.json();
       if (data.success) {
         setProducts(data.data || []);
@@ -81,7 +81,7 @@ export function AccountsPage() {
       params.append("limit", "50");
       if (filterStatus) params.append("status", filterStatus);
 
-      const url = `/api/accounts?${params.toString()}`;
+      const url = `/api/admin/accounts?${params.toString()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -106,7 +106,7 @@ export function AccountsPage() {
 
     try {
       setUploading(true);
-      const res = await fetch("/api/accounts/upload", {
+      const res = await fetch("/api/admin/accounts/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +138,7 @@ export function AccountsPage() {
     if (!confirm("Bạn chắc chắn muốn xóa tài khoản này?")) return;
 
     try {
-      const res = await fetch("/api/accounts/delete", {
+      const res = await fetch("/api/admin/accounts/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -15,6 +15,7 @@ import {
   ShoppingCartIcon, 
   QuestionMarkCircleIcon,
   DocumentTextIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 interface MenuItem {
@@ -32,6 +33,7 @@ const menuItems: MenuItem[] = [
   { icon: CreditCardIcon, label: "Payments", page: "payments" },
   { icon: CubeIcon, label: "Providers", page: "providers" },
   { icon: GiftIcon, label: "Categories", page: "categories" },
+  { icon: ChatBubbleLeftRightIcon, label: "Support", page: "support" },
   { icon: QuestionMarkCircleIcon, label: "FAQ", page: "faq" },
   { icon: DocumentTextIcon, label: "Posts", page: "posts" },
   { icon: ChartBarIcon, label: "Reports", page: "reports" },

@@ -38,3 +38,25 @@ export async function GET(request: Request) {
   });
 }
 
+// POST /api/products - Tạo sản phẩm mới
+export async function POST(request: Request) {
+  const conn = await connectDB();
+  if (!conn) {
+    return NextResponse.json({ success: false, error: 'Database not available' }, { status: 503 });
+  }
+  const body = await request.json();
+  const requiredFields = [
+    'platform',
+    'category',
+    'title',
+    'description',
+    'price',
+  ];
+  for (const field of requiredFields) {
+    if (!body[field]) {
+      return NextResponse.json({ success: false, error: `Missing required field: ${field}` }, { status: 400 });
+    }
+  }
+  const product = await Product.create(body);
+  return NextResponse.json({ success: true, message: 'Product created successfully', data: product }, { status: 201 });
+}
