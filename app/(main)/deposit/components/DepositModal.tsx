@@ -68,7 +68,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
 
       try {
         // Search by orderCode instead of orderCode
-        const response = await fetch(`/api/webhooks?orderCode=${"123456"}`);
+        const response = await fetch(`/api/webhooks?orderCode=${orderCodeParam}`);
         const result = await response.json();
         if (result.success && result.data === "done") {
          //console.log('✅ Payment confirmed for orderCode:', orderCodeParam);
