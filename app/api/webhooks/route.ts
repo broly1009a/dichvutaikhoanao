@@ -55,24 +55,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const description: string | null = searchParams.get('description');
     const amount: string | null = searchParams.get('amount');
     const orderCode: string | null = searchParams.get('orderCode');
-    const uuid: string | null = searchParams.get('uuid'); // Search by UUID for persistent tracking
     const page: string | null = searchParams.get('page');
     const limitParam: string | null = searchParams.get('limit');
+
+    console.log('🔍 Webhook GET request - Params:', {
+      description,
+      amount,
+      orderCode,
+      page,
+      limitParam
+    });
 
     let query: any = {};
     let limit: number = 10;
     let skip: number = 0;
 
-    // If UUID provided (primary method - persistent across QR recreations)
-    if (uuid) {
-      console.log('Searching for UUID:', uuid);
-      query = {
-        'data.description': { $regex: uuid, $options: "i" }
-      };
-      limit = 1;
-    }
     // If description and amount provided, search for specific transaction (VietQR)
-    else if (description && amount) {
+    if (description && amount) {
       query = {
         'data.description': { $regex: description, $options: "i" },
         'data.amount': parseInt(amount)
@@ -81,7 +80,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
     // If orderCode provided, search for PayOS transaction
     else if (orderCode) {
-      console.log('Searching for orderCode:', orderCode);
+      console.log('🔍 Searching for orderCode:', orderCode);
       query = {
         'data.orderCode': parseInt(orderCode)
       };
@@ -101,18 +100,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .limit(limit)
       .lean();
 
+    console.log('📊 Query:', query);
+    console.log('📊 Found webhooks:', webhooks.length);
+
     // If searching for specific transaction, return simplified response
-    if ((description && amount) || orderCode || uuid) {
+    if ((description && amount) || orderCode) {
       if (webhooks.length > 0) {
         const status = "done";
-        
-        // Update cache with payment status
-        // For UUID, use it as cache key; for orderCode, use orderCode
-        // if (uuid) {
-        //   paymentCache.set(uuid, status, webhooks[0]?.data?.amount);
-        // } else if (orderCode) {
-        //   paymentCache.set(orderCode, status, webhooks[0]?.data?.amount);
-        // }
+        console.log('✅ Webhook found for orderCode:', orderCode);
+        console.log('📋 Webhook data:', webhooks[0]);
         
         return NextResponse.json({
           success: true,
@@ -120,6 +116,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           webhooks: webhooks
         });
       } else {
+        console.log('❌ No webhook found for orderCode:', orderCode);
         return NextResponse.json({
           success: true,
           data: "none"

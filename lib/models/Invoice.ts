@@ -3,8 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IInvoice extends Document {
   _id: mongoose.Types.ObjectId;
   userId: string; // User ID who created the invoice
-  uuid: string; // Unique session ID (from deposit)
-  orderCode: number; // PayOS order code
+  orderCode: number; // PayOS order code (unique)
   amount: number; // Invoice amount (VND)
   bonus: number; // Bonus amount
   totalAmount: number; // Total = amount + bonus
@@ -24,15 +23,10 @@ const InvoiceSchema = new Schema<IInvoice>(
       required: true,
       index: true 
     },
-    uuid: { 
-      type: String, 
-      required: true,
-      unique: true,
-      index: true 
-    },
     orderCode: { 
       type: Number, 
       required: true,
+      unique: true,
       index: true 
     },
     amount: { 

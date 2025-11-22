@@ -6,7 +6,6 @@ import { EyeIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/rea
 
 interface Invoice {
   _id: string;
-  uuid: string;
   orderCode: number;
   amount: number;
   bonus: number;
@@ -304,9 +303,6 @@ export default function InvoicePage() {
                       <span className="text-gray-900 dark:text-white font-mono font-medium">
                         #{invoice.orderCode}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {invoice.uuid.slice(0, 8)}...
-                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -399,14 +395,6 @@ export default function InvoicePage() {
                   </label>
                   <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">
                     #{selectedInvoice.orderCode}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    UUID
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono break-all">
-                    {selectedInvoice.uuid}
                   </p>
                 </div>
                 <div>

@@ -25,7 +25,6 @@ interface APITransaction {
   date: string;
   description: string;
   orderCode: string;
-  uuid: string;
 }
 
 interface PaymentsPageProps {

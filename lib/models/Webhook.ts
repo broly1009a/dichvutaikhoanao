@@ -75,10 +75,10 @@ const WebhookSchema = new Schema<IWebhook>({
 // TTL Index: MongoDB automatically deletes documents when expiresAt is reached
 WebhookSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// Index for fast lookup by description (UUID)
-WebhookSchema.index({ 'data.description': 1, status: 1 });
+// Index for fast lookup by description
+WebhookSchema.index({ 'data.description': 1 });
 
 // Index for fast lookup by orderCode
-WebhookSchema.index({ 'data.orderCode': 1, status: 1 });
+WebhookSchema.index({ 'data.orderCode': 1 });
 
 export default mongoose.models.Webhook || mongoose.model<IWebhook>('Webhook', WebhookSchema);

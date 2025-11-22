@@ -72,11 +72,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 /**
  * POST /api/invoices
  * Create a new invoice
- * 
+ *
  * Body:
  * {
  *   userId: string,
- *   uuid: string,
  *   orderCode: number,
  *   amount: number,
  *   bonus: number,
@@ -89,12 +88,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await connectDB();
 
     const body = await req.json();
-    const { userId, uuid, orderCode, amount, bonus = 0, description, paymentMethod = 'payos' } = body;
+    const { userId, orderCode, amount, bonus = 0, description, paymentMethod = 'payos' } = body;
 
     // Validate required fields
-    if (!userId || !uuid || !orderCode || !amount || !description) {
+    if (!userId || !orderCode || !amount || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: userId, orderCode, amount, description' },
         { status: 400 }
       );
     }
@@ -106,8 +105,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Check if invoice already exists
-    const existing = await Invoice.findOne({ uuid });
+    // Check if invoice already exists by orderCode
+    const existing = await Invoice.findOne({ orderCode });
+    
     if (existing) {
       return NextResponse.json(
         { 
@@ -121,7 +121,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Create invoice
     const invoice = new Invoice({
       userId,
-      uuid,
       orderCode,
       amount,
       bonus,
@@ -157,7 +156,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
  * 
  * Body:
  * {
- *   uuid: string,
+ *   orderCode: number,
  *   status: 'pending'|'completed'|'failed'|'expired',
  *   paymentDate?: Date
  * }
@@ -167,11 +166,11 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     await connectDB();
 
     const body = await req.json();
-    const { uuid, status, paymentDate } = body;
+    const { orderCode, status, paymentDate } = body;
 
-    if (!uuid || !status) {
+    if (!orderCode || !status) {
       return NextResponse.json(
-        { error: 'uuid and status are required' },
+        { error: 'orderCode and status are required' },
         { status: 400 }
       );
     }
@@ -184,9 +183,9 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Update invoice
+    // Update invoice by orderCode
     const updated = await Invoice.findOneAndUpdate(
-      { uuid },
+      { orderCode },
       {
         status,
         paymentDate: status === 'completed' ? (paymentDate || new Date()) : paymentDate
@@ -216,23 +215,32 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * GET /api/invoices/[uuid]
- * Get single invoice by UUID
+ * GET /api/invoices/[orderCode]
+ * Get single invoice by orderCode
  */
 export async function GET_SINGLE(req: NextRequest): Promise<NextResponse> {
   try {
     await connectDB();
 
-    const uuid = req.nextUrl.pathname.split('/').pop();
+    const identifier = req.nextUrl.pathname.split('/').pop();
 
-    if (!uuid) {
+    if (!identifier) {
       return NextResponse.json(
-        { error: 'UUID is required' },
+        { error: 'orderCode is required' },
         { status: 400 }
       );
     }
 
-    const invoice = await Invoice.findOne({ uuid });
+    // Parse orderCode as number
+    const orderCodeNum = parseInt(identifier);
+    if (isNaN(orderCodeNum)) {
+      return NextResponse.json(
+        { error: 'Invalid orderCode format' },
+        { status: 400 }
+      );
+    }
+
+    const invoice = await Invoice.findOne({ orderCode: orderCodeNum });
 
     if (!invoice) {
       return NextResponse.json(

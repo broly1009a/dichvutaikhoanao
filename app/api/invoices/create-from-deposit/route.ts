@@ -11,7 +11,6 @@ import Invoice from '@/lib/models/Invoice';
  * Body:
  * {
  *   userId: string,
- *   uuid: string,
  *   orderCode: number,
  *   amount: number,
  *   bonus: number,
@@ -23,17 +22,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await connectDB();
 
     const body = await req.json();
-    const { userId, uuid, orderCode, amount, bonus = 0, description } = body;
+    const { userId, orderCode, amount, bonus = 0, description } = body;
 
-    if (!userId || !uuid || !orderCode || !amount) {
+    if (!userId || !orderCode || !amount) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, uuid, orderCode, amount' },
+        { error: 'Missing required fields: userId, orderCode, amount' },
         { status: 400 }
       );
     }
 
-    // Check if invoice already exists
-    const existing = await Invoice.findOne({ uuid });
+    // Check if invoice already exists by orderCode
+    const existing = await Invoice.findOne({ orderCode });
     if (existing) {
       return NextResponse.json(
         {
@@ -48,7 +47,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Create invoice
     const invoice = new Invoice({
       userId,
-      uuid,
       orderCode,
       amount,
       bonus,

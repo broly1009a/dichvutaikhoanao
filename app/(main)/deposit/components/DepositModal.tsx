@@ -29,7 +29,6 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
   const [isCheckingPayment, setIsCheckingPayment] = useState<boolean>(false);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "success" | "failed" | null>(null);
   const [orderCode, setOrderCode] = useState<string | null>(null);
-  const [uuid, setUuid] = useState<string>("");
   
   const eventSourceRef = useRef<EventSource | null>(null); // Kept for future SSE implementation
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,20 +47,11 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
   const bonusAmount = (numericAmount * bonusPercent) / 100;
   const totalReceived = numericAmount + bonusAmount;
 
-  // Generate UUID for description
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    }).replace(/-/g, '');
-  };
-
   // Check payment status via polling (optimized for Vercel)
-  const startPaymentCheckingPolling = (uuidParam: string) => {
+  const startPaymentCheckingPolling = (orderCodeParam: string) => {
     setIsCheckingPayment(true);
     setPaymentStatus("pending");
-    console.log('Starting polling payment checking for UUID:', uuidParam);
+    //console.log('Starting polling payment checking for orderCode:', orderCodeParam);
     
     let pollCount = 0;
     const maxPolls = 60; // 60 * 10s = 10 minutes (reduced frequency)
@@ -77,11 +67,11 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
       }
 
       try {
-        // Search by UUID (unique for each deposit session)
-        const response = await fetch(`/api/webhooks?uuid=${uuidParam}`);
+        // Search by orderCode instead of orderCode
+        const response = await fetch(`/api/webhooks?orderCode=${orderCodeParam}`);
         const result = await response.json();
-
         if (result.success && result.data === "done") {
+         //console.log('✅ Payment confirmed for orderCode:', orderCodeParam);
           clearInterval(pollInterval);
           setPaymentStatus("success");
           setIsCheckingPayment(false);
@@ -100,163 +90,52 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
     timeoutRef.current = pollInterval as any;
   };
 
-  // Check payment status via SSE (commented out for Vercel deployment)
-  /*
-  const startPaymentCheckingSSE = (orderCodeParam: string, uuidParam: string) => {
-    setIsCheckingPayment(true);
-    setPaymentStatus("pending");
-    console.log('Starting SSE payment checking for UUID:', uuidParam);
-
-    // Setup SSE connection - use UUID as primary key
-    const eventSource = new EventSource(`/api/webhooks/stream?uuid=${uuidParam}`);
-    eventSourceRef.current = eventSource;
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('Payment status update:', data);
-
-        if (data.status === "done") {
-          setPaymentStatus("success");
-          setIsCheckingPayment(false);
-          eventSource.close();
-          eventSourceRef.current = null;
-
-          // Call onCreateInvoice after successful payment
-          setTimeout(() => {
-            onCreateInvoice(numericAmount);
-            handleClose();
-          }, 2000);
-        }
-      } catch (error) {
-        console.error('Error parsing SSE message:', error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE error:', error);
-      
-      // Fallback to polling if SSE fails
-      console.log('SSE connection error, falling back to polling...');
-      eventSource.close();
-      eventSourceRef.current = null;
-      
-      // Retry with 5-second polling interval using UUID
-      startPaymentCheckingPolling(uuidParam);
-    };
-
-    // Set timeout for 10 minutes
-    timeoutRef.current = setTimeout(() => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-      
-      if (!paymentStatus || paymentStatus === "pending") {
-        setIsCheckingPayment(false);
-        setPaymentStatus("failed");
-      }
-    }, 600000); // 10 minutes
-  };
-  */
-
-  // Fallback polling method (kept for compatibility but now main method)
-  /*
-  const startPaymentCheckingPolling = (uuidParam: string) => {
-    console.log('Using polling fallback with 5-second interval for UUID:', uuidParam);
-    
-    let pollCount = 0;
-    const maxPolls = 120; // 120 * 5s = 10 minutes
-    
-    const pollInterval = setInterval(async () => {
-      pollCount++;
-      
-      if (pollCount > maxPolls) {
-        clearInterval(pollInterval);
-        setIsCheckingPayment(false);
-        setPaymentStatus("failed");
-        return;
-      }
-
-      try {
-        // Search by UUID (unique for each deposit session)
-        const response = await fetch(`/api/webhooks?uuid=${uuidParam}`);
-        const result = await response.json();
-
-        if (result.success && result.data === "done") {
-          clearInterval(pollInterval);
-          setPaymentStatus("success");
-          setIsCheckingPayment(false);
-
-          setTimeout(() => {
-            onCreateInvoice(numericAmount);
-            handleClose();
-          }, 2000);
-        }
-      } catch (error) {
-        console.error('Polling error:', error);
-      }
-    }, 5000); // Poll every 5 seconds instead of 3
-  };
-  */
-
+  
   // Generate PayOS QR code
   const generateQR = async () => {
     if (numericAmount < 10000) return;
 
-    const newUuid = generateUUID();
+    let orderCodeToUse = Math.floor(Math.random() * 1000000);
+    // console.log('Initial orderCode generated:', orderCodeToUse);
     
-    // Check if UUID already has a pending payment
-    try {
-      const limitCheck = await fetch(`/api/webhooks/check-session-limit?uuid=${newUuid}`);
-      const limitData = await limitCheck.json();
-      
-      if (limitData.exists) {
-        console.log('Session already exists, continuing payment...');
-        // Session exists, continue with same UUID
-        setUuid(newUuid);
-        const newOrderCode = Math.floor(Math.random() * 1000000);
-        setOrderCode(newOrderCode.toString());
+    // Keep generating new orderCodes until we find one that doesn't exist
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      try {
+        // console.log(`Checking if orderCode ${orderCodeToUse} exists...`);
+        const limitCheck = await fetch(`/api/webhooks/check-session-limit?orderCode=${orderCodeToUse}`);
+        const limitData = await limitCheck.json();
         
-        try {
-          const response = await fetch("/api/payos-link", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderCode: newOrderCode,
-              amount: numericAmount,
-              description: `dat coc ${newUuid}`.substring(0, 25),
-              cancelUrl: window.location.origin + "/thanh-toan-that-bai",
-              returnUrl: window.location.origin + "/thanh-toan-thanh-cong"
-            })
-          });
-          
-          const data = await response.json();
-          const payosData = data.data || data;
-          
-          setPayosInfo(payosData);
-          setPayosQr(payosData.qrCode || "");
-          
-          // Start checking with same UUID
-          startPaymentCheckingPolling(newUuid);
-        } catch (error) {
-          console.error("Error generating PayOS QR:", error);
-          setPayosQr("");
-          setPayosInfo(null);
+        if (!limitData.exists) {
+          // console.log(`✅ OrderCode ${orderCodeToUse} is available`);
+          break; // Found available orderCode
+        } else {
+         // console.log(`❌ OrderCode ${orderCodeToUse} already exists, generating new one...`);
+          orderCodeToUse = Math.floor(Math.random() * 1000000);
+          attempts++;
         }
-        return;
+      } catch (error) {
+        console.warn('Could not check session limit, continuing anyway:', error);
+        break; // Continue with current orderCode if check fails
       }
-    } catch (error) {
-      console.warn('Could not check session limit, continuing anyway:', error);
     }
+    
+    if (attempts >= maxAttempts) {
+      console.warn('Could not find unique orderCode after maximum attempts, using last generated');
+    }
+    
+    setOrderCode(orderCodeToUse.toString());
+    //console.log('Final orderCode to use:', orderCodeToUse);
+    
+    await createPayOSLink(orderCodeToUse);
+    startPaymentCheckingPolling(orderCodeToUse.toString());
+  };
 
-    setUuid(newUuid);
-    
-    const content = `dat coc ${newUuid}`;
-    const newOrderCode = Math.floor(Math.random() * 1000000);
-    setOrderCode(newOrderCode.toString());
-    console.log('Set orderCode to:', newOrderCode, 'UUID:', newUuid);
-    
+  // Helper function to create PayOS link
+  const createPayOSLink = async (orderCodeNum: number) => {
+    const content = `dat coc ${orderCodeNum}`;
     let safeContent = content;
     if (safeContent.length > 25) safeContent = safeContent.slice(0, 25);
     
@@ -265,7 +144,7 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderCode: newOrderCode,
+          orderCode: orderCodeNum,
           amount: numericAmount,
           description: safeContent,
           cancelUrl: window.location.origin + "/thanh-toan-that-bai",
@@ -287,14 +166,13 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: user._id,
-              uuid: newUuid,
-              orderCode: newOrderCode,
+              orderCode: orderCodeNum,
               amount: numericAmount,
               bonus: bonusAmount,
               description: safeContent
             })
           });
-          console.log('Invoice created for UUID:', newUuid);
+          //console.log('Invoice created for orderCode:', orderCodeNum);
         } catch (error) {
           console.warn('Could not create invoice record:', error);
         }
@@ -304,9 +182,6 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
       setPayosQr("");
       setPayosInfo(null);
     }
-
-    // Start checking payment status using polling (optimized for Vercel)
-    startPaymentCheckingPolling(newUuid);
   };
 
   // Handle amount input
@@ -344,7 +219,6 @@ export function DepositModal({ isOpen, onClose, onCreateInvoice, prefilledAmount
     setIsCheckingPayment(false);
     setPaymentStatus(null);
     setOrderCode(null);
-    setUuid("");
     
     onClose();
   };

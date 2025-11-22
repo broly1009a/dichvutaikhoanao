@@ -72,7 +72,6 @@ export async function GET(request: NextRequest) {
         date: invoice.createdAt,
         description: invoice.description || '',
         orderCode: invoice.orderCode,
-        uuid: invoice.uuid,
       };
     });
 

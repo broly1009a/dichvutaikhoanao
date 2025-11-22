@@ -3,68 +3,48 @@ import { connectDB } from '@/lib/db';
 import Webhook from '@/lib/models/Webhook';
 
 /**
- * GET /api/webhooks/check-session-limit?uuid=xxx
+ * GET /api/webhooks/check-session-limit?orderCode=xxx&accountNumber=xxx
  * 
- * Check if user can create a new payment session
- * Limits: max 5 pending sessions per day to prevent abuse
+ * Check if user can create a new payment session or if session/orderCode exists
  * 
- * Returns: { canCreate: boolean, pendingCount: number, maxAllowed: number }
+ * Returns: { exists: boolean, message: string }
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const uuid = searchParams.get('uuid');
-    const accountNumber = searchParams.get('accountNumber'); // Optional: track by account
+    const orderCode = searchParams.get('orderCode');
+    const accountNumber = searchParams.get('accountNumber');
 
-    if (!uuid && !accountNumber) {
+    if (!orderCode && !accountNumber) {
       return NextResponse.json(
-        { error: 'uuid or accountNumber is required' },
+        { error: 'orderCode or accountNumber is required' },
         { status: 400 }
       );
     }
 
-    // Get pending sessions created in last 24 hours
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
-    let query: any = {
-      status: 'pending',
-      createdAt: { $gte: twentyFourHoursAgo }
-    };
-
-    // If UUID provided, check specific session
-    if (uuid) {
-      query['data.description'] = { $regex: uuid, $options: 'i' };
-      
-      const existing = await Webhook.findOne(query);
+    // If orderCode provided, check if webhook exists with this orderCode
+    if (orderCode) {
+      const existing = await Webhook.findOne({
+        'data.orderCode': parseInt(orderCode)
+      });
       
       return NextResponse.json({
         success: true,
         exists: !!existing,
-        status: existing?.status || null,
         message: existing 
-          ? 'Session already exists - you can continue paying' 
-          : 'No existing session found'
+          ? 'OrderCode already exists - please use a different orderCode' 
+          : 'OrderCode is available'
       });
     }
 
-    // If account number provided, count pending sessions for this account
+    // If account number provided, just return that it's allowed (no limit check without status)
     if (accountNumber) {
-      query['data.accountNumber'] = accountNumber;
-      
-      const pendingCount = await Webhook.countDocuments(query);
-      const maxAllowed = 5;
-      const canCreate = pendingCount < maxAllowed;
-
       return NextResponse.json({
         success: true,
-        canCreate,
-        pendingCount,
-        maxAllowed,
-        message: canCreate
-          ? `You can create a new session (${pendingCount}/${maxAllowed})`
-          : `Too many pending sessions. Please wait or check existing ones (${pendingCount}/${maxAllowed})`
+        exists: false,
+        message: 'Account number check completed'
       });
     }
 

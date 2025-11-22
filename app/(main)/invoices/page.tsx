@@ -7,7 +7,6 @@ import { DepositModal } from "../deposit/components/DepositModal";
 
 interface Invoice {
   _id: string;
-  uuid: string;
   orderCode: number;
   amount: number;
   bonus: number;
@@ -130,7 +129,7 @@ export default function InvoicesPage() {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            uuid: selectedInvoice.uuid,
+            orderCode: selectedInvoice.orderCode,
             status: 'completed',
             paymentDate: new Date()
           })
