@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Search, Filter, ShoppingCart, Heart } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { apiClient } from "@/lib/api-client";
 
 interface Product {
   _id: string;
@@ -58,18 +59,16 @@ export default function BuyPage() {
       try {
         setLoading(true);
         const [productsRes, categoriesRes] = await Promise.all([
-          fetch("/api/products"),
-          fetch("/api/categories"),
+          apiClient.getProducts(),
+          apiClient.getCategories(),
         ]);
 
-        if (productsRes.ok) {
-          const data = await productsRes.json();
-          setProducts(data.data || []);
+        if (productsRes.success) {
+          setProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
         }
 
-        if (categoriesRes.ok) {
-          const data = await categoriesRes.json();
-          setCategories(data.data || []);
+        if (categoriesRes.success) {
+          setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);

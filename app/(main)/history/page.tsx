@@ -5,8 +5,9 @@ import { ExclamationTriangleIcon, MagnifyingGlassIcon } from "@heroicons/react/2
 import { HistoryTable } from "./components/HistoryTable";
 import { toast } from "sonner";
 // import Link from "next/link";
-import { useAuthContext } from "@/lib/context/AuthContext";
+// import { useAuthContext } from "@/lib/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { ProtectedRoute } from "@/lib/components/ProtectedRoute";
 interface HistoryItem {
   id: string;
   transactionId: string;
@@ -45,19 +46,14 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   // const [selectedOrder, setSelectedOrder] = useState<HistoryItem | null>(null);
-  const { user } = useAuthContext();
+  // const { user } = useAuthContext();
 
   const router = useRouter();
 
   // Fetch orders từ API
   useEffect(() => {
-    if (!user) {
-      // Nếu chưa đăng nhập điều hướng về trang đăng nhập
-      router.push("/auth/login");
-      return;
-    }
     fetchOrders();
-  }, [page, user]);
+  }, [page]);
 
   const fetchOrders = async () => {
     try {
@@ -186,110 +182,112 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      {/* Alert Bar */}
-      <div className="relative bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 dark:from-yellow-900/20 dark:via-amber-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-orange-400/10 to-yellow-400/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div className="relative flex items-start gap-4">
-          <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 bg-yellow-500 rounded-full blur opacity-50 animate-pulse"></div>
-            <div className="relative bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl shadow-lg">
-              <ExclamationTriangleIcon className="w-6 h-6 text-white" />
+    <ProtectedRoute>
+      <div className="p-4 lg:p-6 space-y-6">
+        {/* Alert Bar */}
+        <div className="relative bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 dark:from-yellow-900/20 dark:via-amber-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-orange-400/10 to-yellow-400/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="relative flex items-start gap-4">
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 bg-yellow-500 rounded-full blur opacity-50 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl shadow-lg">
+                <ExclamationTriangleIcon className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-yellow-900 dark:text-yellow-200 font-bold">
+                  ⚠️ Quan trọng từ ngày 25/3/2024
+                </h4>
+                <span className="px-2 py-1 bg-red-500 text-white rounded-full text-xs font-bold animate-pulse">
+                  HOT
+                </span>
+              </div>
+              <p className="text-sm text-yellow-800 dark:text-yellow-300 leading-relaxed">
+                Web chỉ lưu đơn hàng đã mua trong <strong>7 ngày</strong> gần nhất. Vui lòng tải về và lưu trữ 
+                thông tin đơn hàng của bạn để tránh mất dữ liệu. Sau 7 ngày, đơn hàng sẽ tự động 
+                bị xóa khỏi hệ thống và <strong className="text-red-600 dark:text-red-400">không thể khôi phục</strong>.
+              </p>
             </div>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-yellow-900 dark:text-yellow-200 font-bold">
-                ⚠️ Quan trọng từ ngày 25/3/2024
-              </h4>
-              <span className="px-2 py-1 bg-red-500 text-white rounded-full text-xs font-bold animate-pulse">
-                HOT
-              </span>
-            </div>
-            <p className="text-sm text-yellow-800 dark:text-yellow-300 leading-relaxed">
-              Web chỉ lưu đơn hàng đã mua trong <strong>7 ngày</strong> gần nhất. Vui lòng tải về và lưu trữ 
-              thông tin đơn hàng của bạn để tránh mất dữ liệu. Sau 7 ngày, đơn hàng sẽ tự động 
-              bị xóa khỏi hệ thống và <strong className="text-red-600 dark:text-red-400">không thể khôi phục</strong>.
+        </div>
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-gray-900 dark:text-gray-100">
+              Lịch Sử Mua Hàng
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Quản lý và theo dõi các giao dịch của bạn
             </p>
           </div>
+
+          {/* Search Box */}
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm mã GD hoặc sản phẩm..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 w-full sm:w-80"
+            />
+          </div>
         </div>
-      </div>
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-gray-900 dark:text-gray-100">
-            Lịch Sử Mua Hàng
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Quản lý và theo dõi các giao dịch của bạn
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">Đang tải lịch sử mua hàng...</p>
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">Chưa có đơn hàng nào</p>
+          </div>
+        ) : (
+          <>
+            {/* Data Table */}
+            <HistoryTable
+              data={filteredData}
+              onViewDetail={handleViewDetail}
+              onDownloadTxt={handleDownloadTxt}
+              onDownloadExcel={handleDownloadExcel}
+              onDelete={handleDelete}
+            />
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
+                >
+                  Trước
+                </button>
+                <span className="text-gray-700 dark:text-gray-300">
+                  Trang {page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
+                >
+                  Sau
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Info Footer */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            💡 <strong>Mẹo:</strong> Bạn có thể tải xuống thông tin đơn hàng dưới định dạng TXT
+            hoặc Excel để lưu trữ lâu dài. Hãy thực hiện ngay để không bị mất dữ liệu sau 7 ngày.
           </p>
         </div>
-
-        {/* Search Box */}
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm mã GD hoặc sản phẩm..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 w-full sm:w-80"
-          />
-        </div>
       </div>
-
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">Đang tải lịch sử mua hàng...</p>
-        </div>
-      ) : filteredData.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">Chưa có đơn hàng nào</p>
-        </div>
-      ) : (
-        <>
-          {/* Data Table */}
-          <HistoryTable
-            data={filteredData}
-            onViewDetail={handleViewDetail}
-            onDownloadTxt={handleDownloadTxt}
-            onDownloadExcel={handleDownloadExcel}
-            onDelete={handleDelete}
-          />
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
-              >
-                Trước
-              </button>
-              <span className="text-gray-700 dark:text-gray-300">
-                Trang {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
-              >
-                Sau
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Info Footer */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <p className="text-sm text-blue-800 dark:text-blue-300">
-          💡 <strong>Mẹo:</strong> Bạn có thể tải xuống thông tin đơn hàng dưới định dạng TXT
-          hoặc Excel để lưu trữ lâu dài. Hãy thực hiện ngay để không bị mất dữ liệu sau 7 ngày.
-        </p>
-      </div>
-    </div>
+    </ProtectedRoute>
   );
 }

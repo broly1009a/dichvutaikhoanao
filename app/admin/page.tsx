@@ -21,6 +21,7 @@ import { OrdersPage } from "./pages/OrdersPage";
 import { FAQPage } from "./pages/FAQPage";
 import { PostsPage } from "./pages/PostsPage";
 import { SupportPage } from "./pages/SupportPage";
+import { ProtectedRoute } from "@/lib/components/ProtectedRoute";
 
 export default function AdminPage() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -113,36 +114,38 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sidebar */}
-      <AdminSidebar activePage={activePage} onNavigate={setActivePage} />
+    <ProtectedRoute requiredRole="admin">
+      <div className="flex h-screen bg-gray-50 dark:bg-slate-950">
+        {/* Sidebar */}
+        <AdminSidebar activePage={activePage} onNavigate={setActivePage} />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden ml-64">
-        {/* Navbar */}
-        <AdminNavbar title={getPageTitle()} />
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-64">
+          {/* Navbar */}
+          <AdminNavbar title={getPageTitle()} />
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {renderPage()}
-        </main>
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-6">
+            {renderPage()}
+          </main>
+        </div>
+
+        {/* Modals */}
+        <UserModal
+          isOpen={isUserModalOpen}
+          onClose={handleCloseUserModal}
+          user={selectedUser}
+        />
+
+        <TransactionModal
+          isOpen={isTransactionModalOpen}
+          onClose={handleCloseTransactionModal}
+          transaction={selectedTransaction}
+        />
+
+        {/* Toast Notifications */}
+        <Toaster />
       </div>
-
-      {/* Modals */}
-      <UserModal
-        isOpen={isUserModalOpen}
-        onClose={handleCloseUserModal}
-        user={selectedUser}
-      />
-
-      <TransactionModal
-        isOpen={isTransactionModalOpen}
-        onClose={handleCloseTransactionModal}
-        transaction={selectedTransaction}
-      />
-
-      {/* Toast Notifications */}
-      <Toaster />
-    </div>
+    </ProtectedRoute>
   );
 }

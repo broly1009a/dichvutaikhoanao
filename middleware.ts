@@ -21,6 +21,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip auth for public routes (products and categories)
+  if (pathname.startsWith('/api/products') || pathname.startsWith('/api/categories')) {
+    return NextResponse.next();
+  }
+
   // Apply admin middleware for admin routes
   if (pathname.startsWith('/api/admin/')) {
     return adminMiddleware(request);

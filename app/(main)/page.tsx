@@ -5,6 +5,7 @@ import { CategoryTabs } from "@/app/components/CategoryTabs";
 import { ProductTable } from "@/app/components/ProductTable";
 // import { StatsCards } from "@/app/components/StatsCards";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 
 interface Product {
   _id: string;
@@ -32,21 +33,19 @@ export default function HomePage() {
       try {
         setLoading(true);
         const [productsRes, categoriesRes] = await Promise.all([
-          fetch("/api/products"),
-          fetch("/api/categories"),
+          apiClient.getProducts(),
+          apiClient.getCategories(),
         ]);
 
         let productsData: Product[] = [];
         let categoriesData: any[] = [];
 
-        if (productsRes.ok) {
-          const data = await productsRes.json();
-          productsData = data.data || [];
+        if (productsRes.success && Array.isArray(productsRes.data)) {
+          productsData = productsRes.data;
         }
 
-        if (categoriesRes.ok) {
-          const data = await categoriesRes.json();
-          categoriesData = data.data || [];
+        if (categoriesRes.success && Array.isArray(categoriesRes.data)) {
+          categoriesData = categoriesRes.data;
         }
 
         // Create category map for quick lookup

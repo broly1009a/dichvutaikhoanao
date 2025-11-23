@@ -29,6 +29,7 @@ class ApiClient {
 
     const config: RequestInit = {
       ...options,
+      credentials: 'include', // Include cookies for authentication
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -38,6 +39,14 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
       const data = await response.json();
+
+      // Check for 401 Unauthorized and redirect to login
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
+        throw new Error('Unauthorized - Redirecting to login');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'API request failed');
@@ -114,7 +123,11 @@ class ApiClient {
   }
 
   // Auth
-  async register(data: { username: string; email: string; password: string }) {
+  async getCurrentUser() {
+    return this.request('/auth/me');
+  }
+
+  async register(data: { username: string; email: string; phone: string; password: string }) {
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),

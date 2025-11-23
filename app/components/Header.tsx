@@ -12,7 +12,7 @@ import {
   WalletIcon,
   ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
-import { Badge } from "./ui/badge";
+// import { Badge } from "./ui/badge";
 import Link from "next/link";
 import { useAuthContext } from "@/lib/context/AuthContext";
 

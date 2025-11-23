@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { apiClient } from "../api-client";
 
 interface User {
   _id: string;
@@ -35,26 +36,21 @@ export function useAuth(): UseAuthReturn {
   // Fetch current user data from API
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-      console.log("Auth check response:", res);
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Auth check data:", data);
-        // API returns data directly, not wrapped in user field
-        const userData = data.data || data.user;
-        if (userData) {
-          setUser(userData);
-        } else {
-          setUser(null);
-        }
+      const response = await apiClient.getCurrentUser();
+      console.log("Auth check response:", response);
+      // API returns data directly, not wrapped in user field
+      const userData = response.data;
+      if (userData && typeof userData === 'object' && Object.keys(userData).length > 0) {
+        setUser(userData as User);
+        localStorage.setItem('wasLoggedIn', 'true');
       } else {
         setUser(null);
+        localStorage.removeItem('wasLoggedIn');
       }
     } catch (error) {
       console.error("Auth check failed:", error);
       setUser(null);
+      localStorage.removeItem('wasLoggedIn');
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +58,13 @@ export function useAuth(): UseAuthReturn {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    checkAuth();
+    // Only check auth if user was previously logged in
+    const wasLoggedIn = localStorage.getItem('wasLoggedIn') === 'true';
+    if (wasLoggedIn) {
+      checkAuth();
+    } else {
+      setIsLoading(false);
+    }
   }, [checkAuth]);
 
   // Listen for auth changes from other tabs/windows or components
@@ -83,23 +85,14 @@ export function useAuth(): UseAuthReturn {
 
   const login = useCallback(async ( email: string, phone: string, password: string ) => {
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, phone, password }),
-      });
+      const response = await apiClient.login({ email, password });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Đăng nhập thất bại");
-      }
-
-      const data = await res.json();
-      const userData = data.data?.user || data.user;
+      const userData = response.data;
       
-      if (userData) {
-        setUser(userData);
+      if (userData && typeof userData === 'object' && Object.keys(userData).length > 0) {
+        setUser(userData as User);
+        // Mark as logged in
+        localStorage.setItem('wasLoggedIn', 'true');
       }
       
       // Dispatch custom event to trigger re-check in other instances
@@ -115,16 +108,7 @@ export function useAuth(): UseAuthReturn {
   const register = useCallback(
     async (fullName: string, email: string, phone: string, password: string) => {
       try {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName, email, phone, password }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Đăng ký thất bại");
-        }
+        await apiClient.register({ username: fullName, email, phone, password });
 
         // After registration, user needs to login
         await login(email, phone, password);
@@ -138,11 +122,10 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await apiClient.logout();
       setUser(null);
+      // Clear login flag
+      localStorage.removeItem('wasLoggedIn');
       // Dispatch event
       window.dispatchEvent(new Event("authChanged"));
       router.push("/auth/login");
