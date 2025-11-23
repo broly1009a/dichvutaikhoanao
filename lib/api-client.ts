@@ -40,13 +40,7 @@ class ApiClient {
       const response = await fetch(url, config);
       const data = await response.json();
 
-      // Check for 401 Unauthorized and redirect to login
-      if (response.status === 401) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
-        throw new Error('Unauthorized - Redirecting to login');
-      }
+
 
       if (!response.ok) {
         throw new Error(data.error || 'API request failed');
