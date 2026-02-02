@@ -11,6 +11,7 @@ import './Product';
 import './Provider';
 import './Review';
 import './ServiceOrder';
+import './ServicePricing';
 import './Settings';
 import './SupportTicket';
 import './Transaction';

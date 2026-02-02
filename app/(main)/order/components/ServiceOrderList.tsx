@@ -221,8 +221,8 @@ export default function ServiceOrderList() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // Navigate to order detail page
-                      window.location.href = `/history/${order._id}`;
+                      // Navigate to service order detail page
+                      window.location.href = `/order/${order._id}`;
                     }}
                   >
                     <EyeIcon className="w-4 h-4 mr-2" />

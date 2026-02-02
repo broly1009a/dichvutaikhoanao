@@ -16,6 +16,7 @@ import {
   QuestionMarkCircleIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
+  CurrencyDollarIcon,
   // UserIcon,
 } from "@heroicons/react/24/outline";
 import { APP_NAME } from '@/constants/app';
@@ -39,6 +40,7 @@ const menuItems: MenuItem[] = [
   { icon: ChatBubbleLeftRightIcon, label: "Support", page: "support" },
   { icon: QuestionMarkCircleIcon, label: "FAQ", page: "faq" },
   { icon: DocumentTextIcon, label: "Posts", page: "posts" },
+  { icon: CurrencyDollarIcon, label: "Service Pricing", page: "service-pricing" },
   { icon: ChartBarIcon, label: "Reports", page: "reports" },
   { icon: Cog6ToothIcon, label: "Settings", page: "settings" },
   { icon: ShoppingCartIcon, label: "Orders", page: "orders" },

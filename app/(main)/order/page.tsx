@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { 
   ShoppingCartIcon, 
@@ -27,31 +27,26 @@ import { Label } from "../../components/ui/label";
 import { serviceOrderAPI } from "@/lib/service-order-client";
 import ServiceOrderList from "./components/ServiceOrderList";
 
-// Mock data for services
-const serviceTypes = [
-  { id: "tiktok-follow", name: "TikTok - Tăng Follow", platform: "tiktok" },
-  { id: "tiktok-like", name: "TikTok - Tăng Like", platform: "tiktok" },
-  { id: "tiktok-view", name: "TikTok - Tăng View", platform: "tiktok" },
-  { id: "shopee-follow", name: "Shopee - Tăng Follow Shop", platform: "shopee" },
-  { id: "shopee-like", name: "Shopee - Tăng Like Sản Phẩm", platform: "shopee" },
-  { id: "shopee-view", name: "Shopee - Tăng View Shop", platform: "shopee" },
-  { id: "shopee-order", name: "Shopee - Buff Đơn", platform: "shopee" },
-  { id: "lazada-follow", name: "Lazada - Tăng Follower", platform: "lazada" },
-  { id: "lazada-like", name: "Lazada - Tăng Like", platform: "lazada" },
-  { id: "lazada-order", name: "Lazada - Buff Đơn", platform: "lazada" },
-  { id: "facebook-like", name: "Facebook - Tăng Like Page", platform: "facebook" },
-  { id: "facebook-follow", name: "Facebook - Tăng Follow", platform: "facebook" },
-  { id: "instagram-follow", name: "Instagram - Tăng Follower", platform: "instagram" },
-  { id: "instagram-like", name: "Instagram - Tăng Like", platform: "instagram" },
-  { id: "youtube-view", name: "YouTube - Tăng View", platform: "youtube" },
-  { id: "youtube-sub", name: "YouTube - Tăng Subscribe", platform: "youtube" },
-];
+// Interfaces for pricing data
+interface ServicePricing {
+  _id: string;
+  serviceType: string;
+  platform: string;
+  basePrice: number;
+  minQuantity: number;
+  servers: Array<{ name: string; multiplier: number; estimatedTime: string }>;
+  qualityOptions: Array<{ level: string; multiplier: number }>;
+  regions: Array<{ code: string; name: string }>;
+  isActive: boolean;
+}
 
-const servers = [
-  { id: "sv1", name: "Server 1 - Nhanh", priceMultiplier: 1.5, speed: "2-4 giờ" },
-  { id: "sv2", name: "Server 2 - Chuẩn", priceMultiplier: 1.0, speed: "6-12 giờ" },
-  { id: "sv3", name: "Server 3 - Tiết kiệm", priceMultiplier: 0.8, speed: "12-24 giờ" },
-];
+interface ServiceType {
+  id: string;
+  name: string;
+  platform: string;
+  basePrice: number;
+  minQuantity: number;
+}
 
 const regions = [
   { id: "vn", name: "Việt Nam" },
@@ -59,12 +54,6 @@ const regions = [
   { id: "asia", name: "Châu Á" },
   { id: "us", name: "Hoa Kỳ" },
   { id: "eu", name: "Châu Âu" },
-];
-
-const qualityOptions = [
-  { id: "standard", name: "Standard - Thường", priceMultiplier: 1.0 },
-  { id: "high", name: "High Quality - Cao", priceMultiplier: 1.3 },
-  { id: "premium", name: "Premium - Đặc Biệt", priceMultiplier: 1.6 },
 ];
 
 // Vietnamese provinces
@@ -86,10 +75,18 @@ const provinces = [
 
 export default function OrderPage() {
   const [viewMode, setViewMode] = useState<"create" | "list">("create");
+  
+  // Pricing data from API
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [servers, setServers] = useState<Array<{ id: string; name: string; priceMultiplier: number; estimatedTime: string }>>([]);
+  const [qualityOptions, setQualityOptions] = useState<Array<{ id: string; name: string; priceMultiplier: number }>>([]);
+  const [loadingPricing, setLoadingPricing] = useState(true);
+  
+  // Form state
   const [serviceType, setServiceType] = useState("");
   const [server, setServer] = useState("");
   const [region, setRegion] = useState("");
-  const [quality, setQuality] = useState("");
+  const [quality, setQuality] = useState("standard"); // Mặc định là standard
   const [productLinks, setProductLinks] = useState([{ id: 1, url: "", quantity: "" }]);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,6 +99,59 @@ export default function OrderPage() {
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
 
+  // Fetch pricing data on mount
+  useEffect(() => {
+    fetchPricingData();
+  }, []);
+
+  const fetchPricingData = async () => {
+    try {
+      setLoadingPricing(true);
+      const response = await fetch("/api/service-pricing");
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Convert pricing data to service types
+        const services: ServiceType[] = data.data.map((pricing: ServicePricing) => ({
+          id: pricing.serviceType,
+          name: `${pricing.platform.toUpperCase()} - ${pricing.serviceType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`,
+          platform: pricing.platform,
+          basePrice: pricing.basePrice,
+          minQuantity: pricing.minQuantity
+        }));
+        setServiceTypes(services);
+
+        // Get servers from first pricing (they should be consistent)
+        if (data.data.length > 0 && data.data[0].servers) {
+          const serverList = data.data[0].servers.map((s: any, idx: number) => ({
+            id: `sv${idx + 1}`,
+            name: s.name,
+            priceMultiplier: s.multiplier,
+            estimatedTime: s.estimatedTime
+          }));
+          setServers(serverList);
+        }
+
+        // Get quality options from first pricing
+        if (data.data.length > 0 && data.data[0].qualityOptions) {
+          const qualityList = data.data[0].qualityOptions
+            .filter((q: any) => q.level && q.multiplier) // Filter out invalid entries
+            .map((q: any) => ({
+              id: q.level,
+              name: `${q.level.charAt(0).toUpperCase() + q.level.slice(1)} - ${q.multiplier}x`,
+              priceMultiplier: q.multiplier
+            }));
+          setQualityOptions(qualityList);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch pricing data:", error);
+      toast.error("Không thể tải thông tin giá dịch vụ");
+    } finally {
+      setLoadingPricing(false);
+    }
+  };
+
   // Check if current service requires shipping info
   const requiresShipping = serviceType.includes("order") || serviceType.includes("buff");
 
@@ -109,10 +159,11 @@ export default function OrderPage() {
   const calculateTotal = () => {
     if (!serviceType || !server || productLinks.length === 0) return 0;
 
+    const selectedService = serviceTypes.find(s => s.id === serviceType);
     const selectedServer = servers.find(s => s.id === server);
     const selectedQuality = qualityOptions.find(q => q.id === quality);
     
-    const basePrice = 50; // Base price per unit
+    const basePrice = selectedService?.basePrice || 50;
     const serverMultiplier = selectedServer?.priceMultiplier || 1;
     const qualityMultiplier = selectedQuality?.priceMultiplier || 1;
 
@@ -122,6 +173,36 @@ export default function OrderPage() {
     }, 0);
 
     return total;
+  };
+
+  // Calculate detailed breakdown
+  const getPriceBreakdown = () => {
+    if (!serviceType || !server || productLinks.length === 0) return null;
+
+    const selectedService = serviceTypes.find(s => s.id === serviceType);
+    const selectedServer = servers.find(s => s.id === server);
+    const selectedQuality = qualityOptions.find(q => q.id === quality);
+    
+    const basePrice = selectedService?.basePrice || 50;
+    const serverMultiplier = selectedServer?.priceMultiplier || 1;
+    const qualityMultiplier = selectedQuality?.priceMultiplier || 1;
+
+    const totalQuantity = productLinks.reduce((sum, link) => sum + (parseInt(link.quantity) || 0), 0);
+    const subtotal = totalQuantity * basePrice;
+    const serverFee = subtotal * (serverMultiplier - 1);
+    const qualityFee = (subtotal + serverFee) * (qualityMultiplier - 1);
+    const total = subtotal + serverFee + qualityFee;
+
+    return {
+      totalQuantity,
+      basePrice,
+      subtotal,
+      serverMultiplier,
+      serverFee,
+      qualityMultiplier,
+      qualityFee,
+      total
+    };
   };
 
   const handleAddLink = () => {
@@ -155,6 +236,15 @@ export default function OrderPage() {
       return;
     }
 
+    // Validate minimum quantity
+    const selectedService = serviceTypes.find(s => s.id === serviceType);
+    const minQty = selectedService?.minQuantity || 100;
+    const hasInvalidQuantity = productLinks.some(link => parseInt(link.quantity) < minQty);
+    if (hasInvalidQuantity) {
+      toast.error(`Số lượng tối thiểu là ${minQty} cho mỗi link!`);
+      return;
+    }
+
     // Validate shipping info for buff orders
     if (requiresShipping) {
       if (!fullName || !phoneNumber || !address || !province) {
@@ -167,6 +257,15 @@ export default function OrderPage() {
       }
     }
 
+    // Confirm before submit
+    const total = calculateTotal();
+    const confirmed = window.confirm(
+      `Xác nhận đặt đơn với tổng tiền ${total.toLocaleString("vi-VN")}đ?\n\n` +
+      `Lưu ý: Đơn hàng không thể hủy sau khi đặt.`
+    );
+
+    if (!confirmed) return;
+
     setIsSubmitting(true);
 
     try {
@@ -174,7 +273,7 @@ export default function OrderPage() {
         serviceType,
         server,
         region: region || undefined,
-        quality: quality || undefined,
+        quality: quality || 'standard',
         productLinks: productLinks.map(link => ({
           url: link.url,
           quantity: parseInt(link.quantity)
@@ -200,19 +299,16 @@ export default function OrderPage() {
         duration: 5000,
       });
 
-      // Reset form
+      // Reset form (không reset shipping info để dùng lại)
       setServiceType("");
       setServer("");
       setRegion("");
-      setQuality("");
+      setQuality("standard");
       setProductLinks([{ id: 1, url: "", quantity: "" }]);
       setNote("");
-      setFullName("");
-      setPhoneNumber("");
-      setAddress("");
-      setProvince("");
-      setDistrict("");
-      setWard("");
+
+      // Switch to order list view
+      setTimeout(() => setViewMode("list"), 1000);
 
     } catch (error: any) {
       console.error("Submit order error:", error);
@@ -227,6 +323,7 @@ export default function OrderPage() {
 
   const total = calculateTotal();
   const selectedServer = servers.find(s => s.id === server);
+  const priceBreakdown = getPriceBreakdown();
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -302,18 +399,22 @@ export default function OrderPage() {
                   <Label htmlFor="service-type" className="text-gray-700 dark:text-gray-300">
                     Chọn loại dịch vụ <span className="text-red-500">*</span>
                   </Label>
-                  <Select value={serviceType} onValueChange={setServiceType}>
-                    <SelectTrigger id="service-type" className="w-full">
-                      <SelectValue placeholder="-- Chọn dịch vụ --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {serviceTypes.map(service => (
-                        <SelectItem key={service.id} value={service.id}>
-                          {service.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {loadingPricing ? (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Đang tải dịch vụ...</div>
+                  ) : (
+                    <Select value={serviceType} onValueChange={setServiceType}>
+                      <SelectTrigger id="service-type" className="w-full">
+                        <SelectValue placeholder="-- Chọn dịch vụ --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceTypes.map(service => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.name} - {service.basePrice.toLocaleString("vi-VN")}đ
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 {/* Server Selection */}
@@ -328,7 +429,7 @@ export default function OrderPage() {
                     <SelectContent>
                       {servers.map(srv => (
                         <SelectItem key={srv.id} value={srv.id}>
-                          {srv.name} - Tốc độ: {srv.speed}
+                          {srv.name} - Tốc độ: {srv.estimatedTime}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -584,11 +685,49 @@ export default function OrderPage() {
                 </div>
 
                 {/* Price Summary */}
-                {server && serviceType && (
+                {server && serviceType && priceBreakdown && (
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-5 border border-gray-200 dark:border-slate-600">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Máy chủ đã chọn:</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center pb-2 border-b border-gray-300 dark:border-slate-600">
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">Chi tiết giá</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{priceBreakdown.totalQuantity.toLocaleString("vi-VN")} đơn vị</span>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Đơn giá cơ bản:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {priceBreakdown.basePrice.toLocaleString("vi-VN")}đ/đơn vị
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Tạm tính:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {priceBreakdown.subtotal.toLocaleString("vi-VN")}đ
+                          </span>
+                        </div>
+                        
+                        {priceBreakdown.serverMultiplier !== 1 && (
+                          <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                            <span>Phí máy chủ (×{priceBreakdown.serverMultiplier}):</span>
+                            <span className="font-medium">
+                              +{priceBreakdown.serverFee.toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        )}
+                        
+                        {priceBreakdown.qualityMultiplier !== 1 && (
+                          <div className="flex justify-between text-purple-600 dark:text-purple-400">
+                            <span>Phí chất lượng (×{priceBreakdown.qualityMultiplier}):</span>
+                            <span className="font-medium">
+                              +{priceBreakdown.qualityFee.toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between text-sm pt-2 border-t border-gray-300 dark:border-slate-600">
+                        <span className="text-gray-600 dark:text-gray-400">Máy chủ:</span>
                         <span className="font-medium text-gray-900 dark:text-gray-100">
                           {selectedServer?.name}
                         </span>
@@ -596,16 +735,17 @@ export default function OrderPage() {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Thời gian xử lý:</span>
                         <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {selectedServer?.speed}
+                          {selectedServer?.estimatedTime}
                         </span>
                       </div>
-                      <div className="border-t border-gray-300 dark:border-slate-600 pt-2 mt-2">
+                      
+                      <div className="border-t-2 border-gray-300 dark:border-slate-600 pt-3 mt-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
-                            Thành Tiền:
+                          <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                            Tổng cộng:
                           </span>
-                          <span className="text-2xl font-bold text-red-600 dark:text-red-500">
-                            {total.toLocaleString("vi-VN")}đ
+                          <span className="text-3xl font-bold text-red-600 dark:text-red-500">
+                            {priceBreakdown.total.toLocaleString("vi-VN")}đ
                           </span>
                         </div>
                       </div>
