@@ -43,6 +43,10 @@ export function ServicePricingPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPricing, setEditingPricing] = useState<ServicePricing | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -95,6 +99,7 @@ export function ServicePricingPage() {
     }
 
     setFilteredPricings(result);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [pricings, searchQuery, filterPlatform, filterStatus]);
 
   const fetchPricings = async () => {
@@ -255,6 +260,17 @@ export function ServicePricingPage() {
     return colors[platform] || "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPricings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPricings = filteredPricings.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -307,6 +323,9 @@ export function ServicePricingPage() {
 
         <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
           Tìm thấy <span className="font-semibold">{filteredPricings.length}</span> services
+          {filteredPricings.length > 0 && (
+            <span> • Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredPricings.length)} của {filteredPricings.length}</span>
+          )}
         </div>
       </div>
 
@@ -336,7 +355,7 @@ export function ServicePricingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                {filteredPricings.map((pricing) => (
+                {currentPricings.map((pricing) => (
                   <tr key={pricing._id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition">
                     <td className="px-6 py-4">
                       <span className="font-medium text-gray-900 dark:text-white">{pricing.serviceType}</span>
@@ -399,17 +418,129 @@ export function ServicePricingPage() {
         </div>
       )}
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {editingPricing ? "Chỉnh sửa Pricing" : "Thêm Pricing Mới"}
-              </h2>
+      {/* Pagination */}
+      {!loading && filteredPricings.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            {/* Items per page selector */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Hiển thị:</label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-600 dark:text-gray-400">mục/trang</span>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Page info and navigation */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Trang {currentPage} / {totalPages}
+              </span>
+              
+              <div className="flex gap-1">
+                {/* First page */}
+                <button
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300"
+                >
+                  ««
+                </button>
+
+                {/* Previous page */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300"
+                >
+                  «
+                </button>
+
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-3 py-1 border rounded-lg text-sm ${
+                        currentPage === pageNum
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-gray-300 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Next page */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300"
+                >
+                  »
+                </button>
+
+                {/* Last page */}
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              {editingPricing ? "Cập nhật Service Pricing" : "Thêm Service Pricing Mới"}
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* ID chỉ hiển thị khi chỉnh sửa */}
+              {editingPricing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    ID
+                  </label>
+                  <input
+                    type="text"
+                    value={editingPricing._id}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 disabled:bg-gray-100 dark:disabled:bg-slate-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -483,19 +614,20 @@ export function ServicePricingPage() {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
+              {/* Buttons */}
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  {editingPricing ? "Cập nhật" : "Tạo"}
+                </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+                  className="flex-1 px-4 py-2 bg-gray-300 dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg font-medium"
                 >
                   Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                  {editingPricing ? "Cập nhật" : "Tạo"}
                 </button>
               </div>
             </form>
