@@ -10,6 +10,7 @@ import './Post';
 import './Product';
 import './Provider';
 import './Review';
+import './ServiceOrder';
 import './Settings';
 import './SupportTicket';
 import './Transaction';
