@@ -63,8 +63,9 @@ export function CategoryTabs({
     }
   }, [apiCategories]);
   return (
-   <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 sticky top-0 z-20 shadow-sm">
-      <div className="flex flex-wrap justify-center gap-3 p-4">
+   <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 shadow-sm">
+      <div className="container mx-auto max-w-7xl">
+        <div className="flex flex-wrap justify-center gap-3 p-4">
         {categories.map((category) => {
           const Icon = category.icon;
           const isActive = activeCategory === category.id;
@@ -116,6 +117,7 @@ export function CategoryTabs({
             </button>
           );
         })}
+        </div>
       </div>
     </div>
   );
