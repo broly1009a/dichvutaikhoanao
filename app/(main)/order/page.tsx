@@ -797,9 +797,7 @@ export default function OrderPage() {
       ) : (
         // Order List View
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-6">
-            <ServiceOrderList />
-          </div>
+          <ServiceOrderList />
         </div>
       )}
     </div>

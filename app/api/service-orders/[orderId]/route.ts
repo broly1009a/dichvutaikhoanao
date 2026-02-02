@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 // GET /api/service-orders/[orderId] - Lấy chi tiết đơn dịch vụ
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const conn = await connectDB();
@@ -42,7 +42,7 @@ export async function GET(
       );
     }
 
-    const { orderId } = params;
+    const { orderId } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
       return NextResponse.json(
@@ -86,7 +86,7 @@ export async function GET(
 // PATCH /api/service-orders/[orderId] - Cập nhật trạng thái đơn (Admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const conn = await connectDB();
@@ -124,7 +124,7 @@ export async function PATCH(
       );
     }
 
-    const { orderId } = params;
+    const { orderId } = await params;
     const body = await request.json();
     const { status, failureReason } = body;
 

@@ -152,199 +152,221 @@ export default function ServiceOrderDetailPage() {
       {/* Breadcrumb */}
       <Link
         href="/order"
-        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
       >
         <ChevronLeftIcon className="w-4 h-4" />
-        Quay lại danh sách
+        Quay lại
       </Link>
 
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 rounded-xl border border-blue-200 dark:border-slate-700 p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Chi tiết đơn dịch vụ
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              ID: {orderId}
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+              #{orderId.slice(-8).toUpperCase()}
             </p>
           </div>
-          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${statusConfig[order.status].color}`}>
+          <span className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm ${statusConfig[order.status].color}`}>
             {statusConfig[order.status].label}
           </span>
         </div>
       </div>
 
       {/* Order Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* General Info */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Thông tin chung
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+            <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
+            Thông tin dịch vụ
           </h2>
           
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Nền tảng:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nền tảng</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {platformLabels[order.platform] || order.platform}
-              </span>
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Loại dịch vụ:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Loại dịch vụ</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {order.serviceType}
-              </span>
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Máy chủ:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Máy chủ</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {order.serverName}
-              </span>
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Chất lượng:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Chất lượng</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {order.quality}
-              </span>
+              </p>
             </div>
             {order.region && (
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Khu vực:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
+              <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Khu vực</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
                   {order.region}
-                </span>
+                </p>
               </div>
             )}
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Thời gian xử lý:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Thời gian xử lý</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {order.estimatedTime}
-              </span>
+              </p>
             </div>
           </div>
         </div>
 
         {/* Payment Info */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Thông tin thanh toán
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+            <div className="w-1 h-5 bg-green-600 rounded-full"></div>
+            Thanh toán
           </h2>
           
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Tổng số lượng:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+          <div className="space-y-4">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Tổng số lượng</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                 {totalQuantity.toLocaleString("vi-VN")}
-              </span>
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Số lượng link:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {order.productLinks.length}
-              </span>
+            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Số lượng link</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {order.productLinks.length} link
+              </p>
+            </div>
+            <div className="p-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-xs text-red-600 dark:text-red-400 mb-2">Tổng thanh toán</p>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-500">
+                {order.totalPrice.toLocaleString("vi-VN")}đ
+              </p>
             </div>
             <div className="pt-3 border-t border-gray-200 dark:border-slate-700">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">Tổng tiền:</span>
-                <span className="text-2xl font-bold text-red-600 dark:text-red-500">
-                  {order.totalPrice.toLocaleString("vi-VN")}đ
-                </span>
-              </div>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Ngày tạo:</span>
-              <span className="text-gray-900 dark:text-white">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ngày tạo</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {formatDate(order.createdAt)}
-              </span>
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Product Links */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+          <div className="w-1 h-5 bg-purple-600 rounded-full"></div>
           Danh sách link sản phẩm
+          <span className="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">
+            ({order.productLinks.length} link)
+          </span>
         </h2>
         
         <div className="space-y-3">
           {order.productLinks.map((link, index) => (
             <div 
               key={index}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg"
+              className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 transition-all"
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                  Link {index + 1}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+              <div className="flex-1 min-w-0 mr-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-semibold rounded">
+                    #{index + 1}
+                  </span>
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full">
+                    {link.quantity.toLocaleString("vi-VN")} đơn vị
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 truncate font-mono">
                   {link.url}
                 </p>
               </div>
-              <div className="flex items-center gap-3 ml-4">
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {link.quantity.toLocaleString("vi-VN")} đơn vị
-                </span>
-                <button
-                  onClick={() => copyToClipboard(link.url)}
-                  className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition"
-                  title="Sao chép link"
-                >
-                  <ClipboardIcon className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => copyToClipboard(link.url)}
+                className="flex-shrink-0 p-2.5 text-blue-600 hover:text-white hover:bg-blue-600 dark:text-blue-400 dark:hover:bg-blue-600 rounded-lg transition-all shadow-sm hover:shadow-md"
+                title="Sao chép link"
+              >
+                <ClipboardIcon className="w-5 h-5" />
+              </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Shipping Info - Only for buff orders */}
-      {order.shippingInfo && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Thông tin giao hàng
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Họ và tên</p>
-              <p className="font-semibold text-gray-900 dark:text-white">
-                {order.shippingInfo.fullName}
-              </p>
+      {/* Additional Info Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Shipping Info - Only for buff orders */}
+        {order.shippingInfo && (
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+              <div className="w-1 h-5 bg-orange-600 rounded-full"></div>
+              Thông tin giao hàng
+            </h2>
+            
+            <div className="space-y-3">
+              <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Họ và tên</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {order.shippingInfo.fullName}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Số điện thoại</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {order.shippingInfo.phoneNumber}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Địa chỉ</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {order.shippingInfo.address}
+                  {order.shippingInfo.ward && `, ${order.shippingInfo.ward}`}
+                  {order.shippingInfo.district && `, ${order.shippingInfo.district}`}
+                  , {order.shippingInfo.province}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Note */}
+        {order.note && (
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3 flex items-center gap-2">
+              <div className="w-1 h-5 bg-cyan-600 rounded-full"></div>
+              Ghi chú
+            </h2>
+            <p className="text-sm text-blue-800 dark:text-blue-400 leading-relaxed">
+              {order.note}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Failure Reason - Full width alert */}
+      {order.status === 'failed' && order.failureReason && (
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 border-l-4 border-red-500 rounded-lg p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">!</span>
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Số điện thoại</p>
-              <p className="font-semibold text-gray-900 dark:text-white">
-                {order.shippingInfo.phoneNumber}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Địa chỉ</p>
-              <p className="font-semibold text-gray-900 dark:text-white">
-                {order.shippingInfo.address}
-                {order.shippingInfo.ward && `, ${order.shippingInfo.ward}`}
-                {order.shippingInfo.district && `, ${order.shippingInfo.district}`}
-                , {order.shippingInfo.province}
+              <p className="text-sm font-semibold text-red-900 dark:text-red-300 mb-1">Lý do thất bại</p>
+              <p className="text-sm text-red-800 dark:text-red-400 leading-relaxed">
+                {order.failureReason}
               </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Note */}
-      {order.note && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1">Ghi chú:</p>
-          <p className="text-sm text-blue-800 dark:text-blue-400">{order.note}</p>
-        </div>
-      )}
-
-      {/* Failure Reason */}
-      {order.status === 'failed' && order.failureReason && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-sm font-semibold text-red-900 dark:text-red-300 mb-1">Lý do thất bại:</p>
-          <p className="text-sm text-red-800 dark:text-red-400">{order.failureReason}</p>
         </div>
       )}
     </div>
